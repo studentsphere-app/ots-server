@@ -1,0 +1,227 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id                           String                       @id @default(cuid())
+  name                         String?
+  email                        String                       @unique
+  emailVerified                Boolean
+  image                        String?
+  password                     String?
+  language                     String                       @default("fr")
+  createdAt                    DateTime                     @default(now())
+  updatedAt                    DateTime                     @updatedAt
+  oauthclienttimetableaccesses OauthClientTimetableAccess[]
+  timetables                   Timetable[]
+  accounts                     Account[]
+  oauthaccesstokens            OauthAccessToken[]
+  oauthapplications            OauthApplication[]
+  oauthconsents                OauthConsent[]
+  sessions                     Session[]
+  apikeys                      Apikey[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Timetable {
+  id                           String                       @id @default(cuid())
+  userId                       String
+  name                         String?
+  providerId                   String
+  schoolId                     String?
+  syncInterval                 Int                          @default(60)
+  lastSyncedAt                 DateTime?
+  createdAt                    DateTime                     @default(now())
+  updatedAt                    DateTime                     @updatedAt
+  courses                      Course[]
+  oauthclienttimetableaccesses OauthClientTimetableAccess[]
+  user                         User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentials                  TimetableCredential?
+
+  @@unique([userId, providerId, schoolId])
+}
+
+model TimetableCredential {
+  id                   String    @id @default(cuid())
+  timetableId          String    @unique
+  encryptedCredentials String
+  iv                   String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  timetable            Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+}
+
+model Course {
+  id          String    @id @default(cuid())
+  timetableId String
+  hash        String
+  subject     String
+  start       DateTime
+  end         DateTime
+  location    String?
+  teacher     String?
+  color       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  timetable   Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+
+  @@unique([timetableId, hash])
+}
+
+model OauthAccessToken {
+  id                    String            @id
+  accessToken           String?           @unique
+  refreshToken          String?           @unique
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  clientId              String?
+  userId                String?
+  scopes                String?
+  createdAt             DateTime?
+  updatedAt             DateTime?
+  user                  User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  oauthapplication      OauthApplication? @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([userId])
+  @@map("oauthAccessToken")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model OauthApplication {
+  id                           String                       @id
+  name                         String?
+  icon                         String?
+  metadata                     String?
+  clientId                     String?                      @unique
+  clientSecret                 String?
+  redirectUrls                 String?
+  type                         String?
+  disabled                     Boolean?                     @default(false)
+  userId                       String?
+  createdAt                    DateTime?
+  updatedAt                    DateTime?
+  oauthclienttimetableaccesses OauthClientTimetableAccess[]
+  oauthaccesstokens            OauthAccessToken[]
+  user                         User?                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  oauthconsents                OauthConsent[]
+
+  @@index([userId])
+  @@map("oauthApplication")
+}
+
+model OauthConsent {
+  id               String            @id
+  clientId         String?
+  userId           String?
+  scopes           String?
+  createdAt        DateTime?
+  updatedAt        DateTime?
+  consentGiven     Boolean?
+  user             User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  oauthapplication OauthApplication? @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([userId])
+  @@map("oauthConsent")
+}
+
+model OauthClientTimetableAccess {
+  id               String           @id @default(cuid())
+  clientId         String
+  userId           String
+  timetableId      String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  oauthapplication OauthApplication @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  timetable        Timetable        @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, userId, timetableId])
+  @@index([clientId])
+  @@index([userId])
+  @@index([timetableId])
+}
+
+model Apikey {
+  id                  String    @id @default(cuid())
+  start               String?
+  key                 String    @unique
+  name                String
+  prefix              String?
+  userId              String
+  expiresAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  lastUsedAt          DateTime?
+  metadata            String?
+  rateLimitEnabled    Boolean?  @default(true)
+  rateLimitMax        Int?
+  rateLimitTimeWindow Int?
+  remaining           Int?
+  refillAmount        Int?
+  refillInterval      Int?
+  lastRefillAt        DateTime?
+  lastRequest         DateTime?
+  requestCount        Int       @default(0)
+  enabled             Boolean   @default(true)
+  permissions         String?
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("apikey")
+  @@index([key])
+}
