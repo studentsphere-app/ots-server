@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="../ots-core/.github/assets/logo.png" alt="OTS Logo" width="350" />
+  <img src=".github/assets/logo.png" alt="OTS Logo" width="350" />
   <h1>Open Timetable Scraper Server</h1>
 </div>
 
