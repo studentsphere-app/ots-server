@@ -33,6 +33,7 @@ export default function Register() {
     setLoading(true);
 
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: better-auth client types don't always include additional fields in signUp.email
       const { data: _data, error: signUpError } = await (signUp.email as any)({
         email,
         password,
@@ -49,9 +50,8 @@ export default function Register() {
         // Inscription réussie, on redirige vers l'accueil
         window.location.href = "/";
       }
-      // biome-ignore lint/suspicious/noExplicitAny: error type is unknown
-    } catch (err: any) {
-      setError(err.message || "Une erreur inattendue est survenue.");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Une erreur inattendue est survenue.");
     } finally {
       setLoading(false);
     }

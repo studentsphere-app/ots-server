@@ -1,6 +1,7 @@
-import { betterAuth, type BetterAuthOptions } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
-import { apiKey, oidcProvider } from "better-auth/plugins";
+import { apiKey } from "@better-auth/api-key";
+import { prismaAdapter } from "@better-auth/prisma-adapter";
+import { betterAuth } from "better-auth";
+import { oidcProvider } from "better-auth/plugins";
 import nodemailer from "nodemailer";
 import { PrismaClient } from "./generated/prisma/client.js";
 import "dotenv/config";
@@ -47,7 +48,11 @@ export const auth = betterAuth({
   },
   events: {
     user: {
-      deleted: async ({ user }: { user: any }) => {
+      deleted: async ({
+        user,
+      }: {
+        user: { id: string; email: string; name?: string; language?: string };
+      }) => {
         try {
           const lang = user.language || "fr";
           const html = await renderEmail(
@@ -80,7 +85,7 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 12,
     sendResetPassword: async ({ user, url }, _request) => {
-      const lang = (user as any).language || "fr";
+      const lang = (user as { language?: string }).language || "fr";
       const html = await renderEmail(
         "reset-password",
         {
@@ -111,14 +116,20 @@ export const auth = betterAuth({
           `[AUTH] Sending verification email to ${user.email} (isEmailChange: ${!!isEmailChange})`
         );
 
-        const lang = (user as any).language || "fr";
+        const lang = (user as { language?: string }).language || "fr";
         const template = isEmailChange ? "verify-new-email" : "verification";
         const subjectKey = isEmailChange
           ? "email.subjects.verify-new-email"
           : "email.subjects.verification";
 
         const html = await renderEmail(
-          template as any,
+          template as
+            | "verification"
+            | "reset-password"
+            | "approve-email-change"
+            | "verify-new-email"
+            | "delete-account"
+            | "account-deleted",
           {
             name: user.name || user.email,
             url: url,
@@ -141,6 +152,31 @@ export const auth = betterAuth({
         );
       }
     },
+  },
+  rateLimit: {
+    enabled: true,
+    rules: [
+      {
+        path: "/api-key/verify",
+        max: 500,
+        window: 60,
+      },
+      {
+        path: "/api-key/create",
+        max: 20,
+        window: 60,
+      },
+      {
+        path: "/api/v1/**",
+        max: 1000,
+        window: 60,
+      },
+      {
+        path: "/api/**",
+        max: 1000,
+        window: 60,
+      },
+    ],
   },
   plugins: [
     oidcProvider({
@@ -179,6 +215,11 @@ export const auth = betterAuth({
         defaultExpiresIn: 60 * 60 * 24 * 365, // 1 an par défaut (en secondes)
         minExpiresIn: 1, // minimum 1 jour (en jours)
         maxExpiresIn: 365 * 5, // maximum 5 ans (en jours)
+      },
+      rateLimit: {
+        enabled: true,
+        timeWindow: 1000 * 60 * 60 * 24, // 1 day in ms
+        maxRequests: 100000, 
       },
     }),
   ],

@@ -1,6 +1,6 @@
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,19 +26,17 @@ export async function renderEmail(
     path.join(__dirname, "templates/emails", `${templateName}.html`),
   ];
 
-  let templatePath = possiblePaths[0];
+  let _templatePath = possiblePaths[0];
   let content = "";
   let loaded = false;
 
   for (const p of possiblePaths) {
     try {
       content = await fs.readFile(p, "utf-8");
-      templatePath = p;
+      _templatePath = p;
       loaded = true;
       break;
-    } catch {
-      continue;
-    }
+    } catch {}
   }
 
   try {

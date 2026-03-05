@@ -1,6 +1,7 @@
+import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import crypto from "node:crypto";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
 import cors from "cors";
 import express, {
@@ -17,18 +18,40 @@ import {
   providers,
 } from "./providers/index";
 import {
-  performSync,
   scheduleTimetableSync,
-  triggerImmediateSync,
   timetableQueue,
+  triggerImmediateSync,
 } from "./queue/index";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
 interface RequestWithApiKey extends Request {
   apiKeyUser?: {
     userId: string;
     timetableIds: string[];
   };
+}
+
+interface OAuthMetadata {
+  requestedPermissions?: string[];
+  website?: string;
+  developerContact?: string;
+  tosLink?: string;
+  privacyPolicyLink?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Safely parses a JSON string into a typed object.
+ * Returns an empty object if parsing fails or input is nullish.
+ */
+function parseMetadata<T = Record<string, unknown>>(
+  metadata: string | null | undefined
+): T {
+  if (!metadata) return {} as T;
+  try {
+    return JSON.parse(metadata) as T;
+  } catch (_e) {
+    return {} as T;
+  }
 }
 
 const __filename = fileURLToPath(import.meta.url);
@@ -49,7 +72,7 @@ app.use(
   })
 );
 
-app.use((req, res, next) => {
+app.use((_req, _res, next) => {
   next();
 });
 
@@ -316,6 +339,71 @@ app.delete("/api/timetables/:id", async (req, res) => {
 });
 
 /**
+ * PATCH /api/timetables/:id
+ * Updates specific fields of a timetable (e.g., syncInterval).
+ */
+app.patch("/api/timetables/:id", async (req, res) => {
+  const session = await auth.api.getSession({
+    headers: fromNodeHeaders(req.headers),
+  });
+
+  if (!session) {
+    return res
+      .status(401)
+      .json({ error: "UNAUTHORIZED", message: "Not authenticated" });
+  }
+
+  const id = req.params.id as string;
+  const { syncInterval } = req.body;
+
+  if (syncInterval === undefined) {
+    return res
+      .status(400)
+      .json({ error: "BAD_REQUEST", message: "Missing required fields" });
+  }
+
+  try {
+    // Check ownership
+    const timetable = await prisma.timetable.findUnique({
+      where: { id },
+    });
+
+    if (!timetable) {
+      return res
+        .status(404)
+        .json({ error: "NOT_FOUND", message: "Emploi du temps non trouvé" });
+    }
+
+    if (timetable.userId !== session.user.id) {
+      return res
+        .status(403)
+        .json({ error: "FORBIDDEN", message: "Accès refusé" });
+    }
+
+    // Update interval
+    const updatedTimetable = await prisma.timetable.update({
+      where: { id },
+      data: { syncInterval: Number(syncInterval) },
+    });
+
+    // Reschedule sync job
+    await scheduleTimetableSync(id, updatedTimetable.syncInterval);
+
+    res.json({
+      success: true,
+      message: "Intervalle de synchronisation mis à jour",
+      timetable: updatedTimetable,
+    });
+  } catch (error) {
+    console.error("[API Error]", error);
+    res.status(500).json({
+      error: "INTERNAL_ERROR",
+      message: (error as Error).message,
+    });
+  }
+});
+
+/**
  * GET /api/oauth/validate-consent
  * Validate that a consent code exists and has not expired.
  */
@@ -323,12 +411,10 @@ app.get("/api/oauth/validate-consent", async (req: Request, res: Response) => {
   const { consent_code } = req.query;
 
   if (!consent_code || typeof consent_code !== "string") {
-    return res
-      .status(400)
-      .json({
-        error: "BAD_REQUEST",
-        message: "Missing or invalid consent_code",
-      });
+    return res.status(400).json({
+      error: "BAD_REQUEST",
+      message: "Missing or invalid consent_code",
+    });
   }
 
   try {
@@ -339,12 +425,10 @@ app.get("/api/oauth/validate-consent", async (req: Request, res: Response) => {
     });
 
     if (!verification) {
-      return res
-        .status(404)
-        .json({
-          error: "NOT_FOUND",
-          message: "Consent code not found or expired",
-        });
+      return res.status(404).json({
+        error: "NOT_FOUND",
+        message: "Consent code not found or expired",
+      });
     }
 
     if (verification.expiresAt < new Date()) {
@@ -689,7 +773,7 @@ app.get(
           if (app.metadata) {
             parsedMetadata = JSON.parse(app.metadata);
           }
-        } catch (e) {
+        } catch (_e) {
           // Fallback if metadata is invalid JSON
         }
         return {
@@ -737,12 +821,10 @@ app.post(
     } = req.body;
 
     if (!name) {
-      return res
-        .status(400)
-        .json({
-          error: "BAD_REQUEST",
-          message: "Application name is required",
-        });
+      return res.status(400).json({
+        error: "BAD_REQUEST",
+        message: "Application name is required",
+      });
     }
 
     try {
@@ -750,7 +832,9 @@ app.post(
       const clientSecret = crypto.randomBytes(32).toString("base64url");
       const id = crypto.randomBytes(16).toString("hex"); // Prisma requires an id
 
-      const scopes = Array.isArray(requestedPermissions) ? requestedPermissions : [];
+      const scopes = Array.isArray(requestedPermissions)
+        ? requestedPermissions
+        : [];
       if (!scopes.includes("openid")) {
         scopes.push("openid");
       }
@@ -843,24 +927,24 @@ app.put(
           .json({ error: "NOT_FOUND", message: "Application not found" });
       }
 
-      let parsedMetadata: any = {};
-      if (existing.metadata) {
-        try {
-          parsedMetadata = JSON.parse(existing.metadata);
-        } catch (e) {}
-      }
+      const parsedMetadata = parseMetadata<OAuthMetadata>(existing.metadata);
 
       let scopesToSave = parsedMetadata.requestedPermissions || [];
       if (requestedPermissions !== undefined) {
-         scopesToSave = Array.isArray(requestedPermissions) ? requestedPermissions : [];
+        scopesToSave = Array.isArray(requestedPermissions)
+          ? requestedPermissions
+          : [];
       }
       if (!scopesToSave.includes("openid")) {
-         scopesToSave.push("openid");
+        scopesToSave.push("openid");
       }
 
       const newMetadata = {
         ...parsedMetadata,
-        website: website !== undefined ? website : parsedMetadata.website,
+        website:
+          website !== undefined
+            ? (website as string)
+            : (parsedMetadata.website as string | undefined),
         requestedPermissions: scopesToSave,
         developerContact:
           developerContact !== undefined
@@ -1073,7 +1157,7 @@ app.get("/api/api-keys", async (req: Request, res: Response) => {
 
   try {
     const apiKeys = await prisma.apikey.findMany({
-      where: { userId: session.user.id },
+      where: { referenceId: session.user.id },
       select: {
         id: true,
         name: true,
@@ -1190,7 +1274,7 @@ app.delete("/api/api-keys/:keyId", async (req: Request, res: Response) => {
         .json({ error: "NOT_FOUND", message: "API key not found" });
     }
 
-    if (apiKey.userId !== session.user.id) {
+    if (apiKey.referenceId !== session.user.id) {
       return res
         .status(403)
         .json({ error: "FORBIDDEN", message: "Access denied" });
@@ -1240,7 +1324,7 @@ app.patch("/api/api-keys/:keyId", async (req: Request, res: Response) => {
         .json({ error: "NOT_FOUND", message: "API key not found" });
     }
 
-    if (apiKey.userId !== session.user.id) {
+    if (apiKey.referenceId !== session.user.id) {
       return res
         .status(403)
         .json({ error: "FORBIDDEN", message: "Access denied" });
@@ -1263,14 +1347,13 @@ app.patch("/api/api-keys/:keyId", async (req: Request, res: Response) => {
       }
     }
 
-    // biome-ignore lint/suspicious/noExplicitAny: dynamic update object
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (name) updateData.name = name;
     if (timetableIds) {
-      updateData.metadata = {
-        ...(typeof apiKey.metadata === "object" ? apiKey.metadata : {}),
+      updateData.metadata = JSON.stringify({
+        ...(parseMetadata(apiKey.metadata) as Record<string, unknown>),
         timetableIds,
-      };
+      });
     }
 
     const updatedKey = await prisma.apikey.update({
@@ -1339,7 +1422,7 @@ async function validateApiKey(req: Request, res: Response, next: NextFunction) {
 
     const keyRecord = result.key;
     console.log(
-      `[API Key Validation] Success. Key ID: ${keyRecord.id}, User ID: ${keyRecord.userId}`
+      `[API Key Validation] Success. Key ID: ${keyRecord.id}, User ID: ${keyRecord.referenceId}`
     );
 
     // Extract timetable IDs from metadata
@@ -1367,7 +1450,7 @@ async function validateApiKey(req: Request, res: Response, next: NextFunction) {
 
     // Attach to request
     (req as RequestWithApiKey).apiKeyUser = {
-      userId: keyRecord.userId,
+      userId: keyRecord.referenceId,
       timetableIds,
     };
 

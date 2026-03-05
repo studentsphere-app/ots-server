@@ -1,11 +1,13 @@
 import {
   ArrowRight,
   CheckCircle2,
+  Clock,
   Code2,
   Eye,
   Globe,
   Shield,
   Trash2,
+  X,
   Zap,
 } from "lucide-react";
 import type React from "react";
@@ -13,13 +15,52 @@ import { useCallback, useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, Outlet } from "react-router-dom";
 import Footer from "../components/Footer";
-import TimetablePreviewModal from "../components/TimetablePreviewModal";
+import TimetablePreviewModal, {
+  type PreviewCourse,
+} from "../components/TimetablePreviewModal";
 import { sendVerificationEmail } from "../lib/auth-client";
+
+interface User {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  name?: string;
+  image?: string;
+  language?: string;
+}
+
+interface Session {
+  user: User;
+  session: unknown;
+}
+
+interface School {
+  id: string;
+  name: string;
+  logo?: string;
+}
+
+interface Provider {
+  id: string;
+  name: string;
+  logo?: string;
+  schools?: School[];
+}
+
+interface Timetable {
+  id: string;
+  providerId: string;
+  schoolId: string;
+  lastSyncedAt: string | null;
+  syncInterval: number;
+  isSyncing: boolean;
+  lastSyncError: string | null;
+  courses?: PreviewCourse[];
+}
 
 export default function Home() {
   const { t, i18n } = useTranslation();
-  // biome-ignore lint/suspicious/noExplicitAny: state
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   const [langInitialized, setLangInitialized] = useState(false);
 
@@ -32,14 +73,18 @@ export default function Home() {
     }
   }, [session?.user?.language, i18n, langInitialized]);
   const [isPending, setIsPending] = useState(false);
-  // biome-ignore lint/suspicious/noExplicitAny: state
-  const [timetables, setTimetables] = useState<any[]>([]);
-  // biome-ignore lint/suspicious/noExplicitAny: state
-  const [providers, setProviders] = useState<any[]>([]);
+  const [timetables, setTimetables] = useState<Timetable[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUnverifiedModalOpen, setIsUnverifiedModalOpen] = useState(false);
-  // biome-ignore lint/suspicious/noExplicitAny: state
-  const [previewTimetable, setPreviewTimetable] = useState<any>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTimetable, setEditingTimetable] = useState<Timetable | null>(
+    null
+  );
+  const [editSyncInterval, setEditSyncInterval] = useState(60);
+  const [previewTimetable, setPreviewTimetable] = useState<Timetable | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [syncSuccess, setSyncSuccess] = useState<{
@@ -208,11 +253,9 @@ export default function Home() {
         await new Promise((resolve) => setTimeout(resolve, 2000));
         const listRes = await fetch("/api/timetables");
         if (listRes.ok) {
-          const listData = await listRes.json();
-          // biome-ignore lint/suspicious/noExplicitAny: error
+          const listData: Timetable[] = await listRes.json();
           const updatedTimetable = listData.find(
-            // biome-ignore lint/suspicious/noExplicitAny: error
-            (t: any) => t.id === newTimetableId
+            (t: Timetable) => t.id === newTimetableId
           );
 
           if (updatedTimetable) {
@@ -222,7 +265,9 @@ export default function Home() {
             }
           } else {
             // Timetable was deleted or not found (e.g., if syncFailed and it got removed, though we decided not to remove it. Still good practice to check logic)
-            throw new Error("L'emploi du temps a disparu pendant la synchronisation.");
+            throw new Error(
+              "L'emploi du temps a disparu pendant la synchronisation."
+            );
           }
         }
       }
@@ -232,9 +277,8 @@ export default function Home() {
       setPassword("");
       setSchoolId("");
       fetchTimetables();
-      // biome-ignore lint/suspicious/noExplicitAny: error
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -262,12 +306,39 @@ export default function Home() {
     }
   };
 
+  const handleUpdateInterval = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTimetable) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/timetables/${editingTimetable.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ syncInterval: editSyncInterval }),
+      });
+
+      if (res.ok) {
+        setIsEditModalOpen(false);
+        fetchTimetables();
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to update interval");
+      }
+    } catch (err) {
+      console.error("Failed to update interval", err);
+      alert(t("home.network_error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResendVerification = async () => {
     setResendingEmail(true);
     setResendStatus(null);
     try {
       const { error } = await sendVerificationEmail({
-        email: session.user.email,
+        email: session?.user.email,
         callbackURL: window.location.origin,
       });
       if (error) {
@@ -725,8 +796,7 @@ export default function Home() {
                       (p) => p.id === timetable.providerId
                     );
                     const school = provider?.schools?.find(
-                      // biome-ignore lint/suspicious/noExplicitAny: map
-                      (s: any) => s.id === timetable.schoolId
+                      (s) => s.id === timetable.schoolId
                     );
                     return (
                       <div
@@ -746,6 +816,11 @@ export default function Home() {
                               {provider?.name || timetable.providerId}
                             </h4>
                           </div>
+                          <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                            ID: {timetable.id}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-2">
                             {!timetable.isSyncing ? (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
@@ -768,6 +843,18 @@ export default function Home() {
                               title={t("home.preview") || "Preview"}
                             >
                               <Eye size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingTimetable(timetable);
+                                setEditSyncInterval(timetable.syncInterval);
+                                setIsEditModalOpen(true);
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-amber-600 rounded-lg hover:bg-amber-50 transition-colors"
+                              title={t("home.edit_interval") || "Edit Interval"}
+                            >
+                              <Clock size={16} />
                             </button>
                             <button
                               type="button"
@@ -1258,6 +1345,94 @@ export default function Home() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {isEditModalOpen && editingTimetable && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div
+              className="fixed inset-0 transition-opacity"
+              aria-hidden="true"
+              onClick={() => setIsEditModalOpen(false)}
+            >
+              <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
+            </div>
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+            <div className="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <form onSubmit={handleUpdateInterval}>
+                <div className="bg-white px-8 pt-8 pb-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {t("home.edit_interval_title")}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditModalOpen(false)}
+                      className="text-gray-400 hover:text-gray-500 transition-colors"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="edit-sync-interval"
+                        className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"
+                      >
+                        {t("home.sync_interval_label")}
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="edit-sync-interval"
+                          type="number"
+                          min="15"
+                          value={editSyncInterval}
+                          onChange={(e) =>
+                            setEditSyncInterval(parseInt(e.target.value, 10))
+                          }
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#37B7D5] focus:border-[#37B7D5] sm:text-sm outline-none transition-all"
+                          required
+                          disabled={loading}
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
+                          MIN
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500">
+                        {t("home.edit_interval_desc")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 px-8 py-6 flex flex-row-reverse gap-3">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 flex items-center justify-center rounded-xl px-4 py-3 bg-[#37B7D5] text-sm font-bold text-white hover:bg-[#2A9CB8] transition-all disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      t("home.save")
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="flex-1 flex items-center justify-center rounded-xl px-4 py-3 bg-white border border-gray-300 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all"
+                  >
+                    {t("home.cancel")}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

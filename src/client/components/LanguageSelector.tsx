@@ -14,7 +14,7 @@ export default function LanguageSelector() {
     // Sync to backend in background
     (async () => {
       try {
-        await (authClient as any).updateUser({
+        await authClient.updateUser({
           language: newLang,
         });
       } catch (error) {

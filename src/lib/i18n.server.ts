@@ -15,5 +15,5 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 export function t(key: string, lang = "fr"): string {
-  return translations[lang]?.[key] || translations["fr"]?.[key] || key;
+  return translations[lang]?.[key] || translations.fr?.[key] || key;
 }

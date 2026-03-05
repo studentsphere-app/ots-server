@@ -74,6 +74,11 @@ const resources = {
         unverified_modal_desc:
           "Vous devez vérifier votre adresse email avant de pouvoir ajouter un emploi du temps.",
         unverified_modal_button: "Vérifier mon email",
+        edit_interval_title: "Modifier l'intervalle",
+        edit_interval_desc:
+          "L'intervalle sera mis à jour et la tâche de synchronisation sera reprogrammée.",
+        save: "Enregistrer",
+        add: "Ajouter",
       },
       authorized_apps: {
         fetch_error: "Erreur lors de la récupération des applications",
@@ -167,7 +172,8 @@ const resources = {
       },
       dev_apps: {
         tab_title: "Applications",
-        description: "Gérez vos applications OAuth (Developer Apps) enregistrées sur le serveur.",
+        description:
+          "Gérez vos applications OAuth (Developer Apps) enregistrées sur le serveur.",
         create_button: "Créer une App",
         loading: "Chargement de vos applications...",
         no_apps: "Aucune application",
@@ -175,7 +181,7 @@ const resources = {
         create_app: "Créer une Application",
         edit_app: "Éditer l'Application",
         created_at: "Créée le ",
-        
+
         modal: {
           create_title: "Créer une Application",
           edit_title: "Éditer l'Application",
@@ -183,29 +189,37 @@ const resources = {
           client_id: "Client ID",
           name_label: "Nom de l'application *",
           name_placeholder: "Ex: Mon Client Extra",
-          name_helper: "Le nom public de votre application, visible par vos utilisateurs.",
+          name_helper:
+            "Le nom public de votre application, visible par vos utilisateurs.",
           website_label: "URL du site web racine (Optionnel)",
           website_placeholder: "https://example.com",
-          website_helper: "Permet aux utilisateurs de retourner sur votre site web depuis la page d'autorisation.",
+          website_helper:
+            "Permet aux utilisateurs de retourner sur votre site web depuis la page d'autorisation.",
           icon_label: "URL de logo (Optionnel)",
           icon_placeholder: "https://example.com/logo.png",
-          icon_helper: "Le logo affiché sur la page de consentement (doit être une image via HTTPS).",
+          icon_helper:
+            "Le logo affiché sur la page de consentement (doit être une image via HTTPS).",
           contact_label: "Contact développeur (Optionnel)",
           contact_placeholder: "dev@example.com",
-          contact_helper: "Email utilisé pour vous contacter en cas de problème technique avec l'application.",
+          contact_helper:
+            "Email utilisé pour vous contacter en cas de problème technique avec l'application.",
           tos_label: "Conditions d'utilisation (Optionnel)",
           tos_placeholder: "https://example.com/tos",
-          tos_helper: "Lien vers les conditions d'utilisation de l'application.",
+          tos_helper:
+            "Lien vers les conditions d'utilisation de l'application.",
           privacy_label: "Politique de confidentialité (Optionnel)",
           privacy_placeholder: "https://example.com/privacy",
-          privacy_helper: "Lien vers la politique de confidentialité de l'application.",
+          privacy_helper:
+            "Lien vers la politique de confidentialité de l'application.",
           redirects_label: "URIs de redirection autorisées *",
           redirects_placeholder: "https://app.example.com/callback",
           redirects_add: "Ajouter",
           redirects_none: "Aucune URI ajoutée pour le moment.",
-          redirects_helper: "Ces URIs seront utilisées pour rediriger l'utilisateur après l'autorisation de votre application. Elles doivent être exactes. Adresses IP interdites.",
+          redirects_helper:
+            "Ces URIs seront utilisées pour rediriger l'utilisateur après l'autorisation de votre application. Elles doivent être exactes. Adresses IP interdites.",
           permissions_label: "Permissions",
-          permissions_helper: "Permissions accordées à l'application qu'elle peut demander à l'utilisateur.",
+          permissions_helper:
+            "Permissions accordées à l'application qu'elle peut demander à l'utilisateur.",
           danger_zone_title: "Zone de danger",
           regenerate_secret: "Regénérer le Secret",
           revoke_tokens: "Révoquer les accès actuels",
@@ -215,52 +229,62 @@ const resources = {
           saving: "Enregistrement...",
           create: "Créer",
           close: "Fermer",
-          redirects_error_invalid: "Cette URI est déjà ajoutée."
+          redirects_error_invalid: "Cette URI est déjà ajoutée.",
         },
-        
+
         secret_modal: {
           created_success: "Application créée avec succès",
           regenerate_success: "Secret regénéré avec succès",
-          secret_warning: "Assurez-vous de copier votre Client Secret maintenant. Vous ne pourrez plus le voir !",
+          secret_warning:
+            "Assurez-vous de copier votre Client Secret maintenant. Vous ne pourrez plus le voir !",
           security_notice: "Avis de sécurité important",
-          security_notice_desc: "C'est la seule fois que vous verrez ce Client Secret. Stockez-le en lieu sûr !",
+          security_notice_desc:
+            "C'est la seule fois que vous verrez ce Client Secret. Stockez-le en lieu sûr !",
           client_id: "Client ID",
           your_client_secret: "Votre Client Secret",
         },
 
         regenerate_modal: {
           title: "Regénérer le secret",
-          confirm: "Attention : L'ancien secret sera invalidé immédiatement. Êtes-vous sûr de vouloir continuer ?",
+          confirm:
+            "Attention : L'ancien secret sera invalidé immédiatement. Êtes-vous sûr de vouloir continuer ?",
           regenerating: "Regénération...",
-          button: "Regénérer le secret"
+          button: "Regénérer le secret",
         },
 
         delete_modal: {
           title: "Supprimer l'application",
-          confirm: "Êtes-vous sûr ? Cette action est irréversible et détruira l'accès aux utilisateurs connectés via cette application.",
+          confirm:
+            "Êtes-vous sûr ? Cette action est irréversible et détruira l'accès aux utilisateurs connectés via cette application.",
           deleting: "Suppression...",
-          button: "Supprimer définitivement"
+          button: "Supprimer définitivement",
         },
 
         revoke_modal: {
           title: "Révoquer tous les accès",
-          confirm: "Tous les utilisateurs de cette application devront obligatoirement passer par l'étape d'authentification avant de pouvoir l'utiliser à nouveau. Cette action est irréversible.",
+          confirm:
+            "Tous les utilisateurs de cette application devront obligatoirement passer par l'étape d'authentification avant de pouvoir l'utiliser à nouveau. Cette action est irréversible.",
           revoking: "Révocation...",
-          button: "Révoquer"
+          button: "Révoquer",
         },
-        
+
         scopes: {
           openid: "OpenID (Requis)",
-          openid_desc: "Permet d'authentifier l'utilisateur via OpenID Connect.",
+          openid_desc:
+            "Permet d'authentifier l'utilisateur via OpenID Connect.",
           profile: "Profil public",
-          profile_desc: "Permet à l'application d'accéder aux informations de base de l'utilisateur (nom, avatar).",
+          profile_desc:
+            "Permet à l'application d'accéder aux informations de base de l'utilisateur (nom, avatar).",
           email: "Adresse e-mail",
-          email_desc: "Permet à l'application d'accéder à l'adresse e-mail de l'utilisateur.",
+          email_desc:
+            "Permet à l'application d'accéder à l'adresse e-mail de l'utilisateur.",
           timetable: "Lecture de l'emploi du temps",
-          timetable_desc: "Permet à l'application de lire l'emploi du temps et les détails des cours de l'utilisateur.",
+          timetable_desc:
+            "Permet à l'application de lire l'emploi du temps et les détails des cours de l'utilisateur.",
           offline_access: "Accès hors ligne",
-          offline_access_desc: "Permet à l'application de maintenir l'accès même lorsque l'utilisateur est inactif."
-        }
+          offline_access_desc:
+            "Permet à l'application de maintenir l'accès même lorsque l'utilisateur est inactif.",
+        },
       },
       consent: {
         loading: "Chargement...",
@@ -461,6 +485,11 @@ const resources = {
         unverified_modal_desc:
           "You must verify your email address before you can add a timetable.",
         unverified_modal_button: "Verify my email",
+        edit_interval_title: "Edit interval",
+        edit_interval_desc:
+          "The interval will be updated and the synchronization task will be rescheduled.",
+        save: "Save",
+        add: "Add",
       },
       authorized_apps: {
         fetch_error: "Error fetching applications",
@@ -554,7 +583,8 @@ const resources = {
       },
       dev_apps: {
         tab_title: "Applications",
-        description: "Manage your registered OAuth applications (Developer Apps) on the server.",
+        description:
+          "Manage your registered OAuth applications (Developer Apps) on the server.",
         create_button: "Create App",
         loading: "Loading your applications...",
         no_apps: "No applications",
@@ -562,7 +592,7 @@ const resources = {
         create_app: "Create Application",
         edit_app: "Edit Application",
         created_at: "Created on ",
-        
+
         modal: {
           create_title: "Create an Application",
           edit_title: "Edit Application",
@@ -570,16 +600,20 @@ const resources = {
           client_id: "Client ID",
           name_label: "Application Name *",
           name_placeholder: "E.g. My Awesome Client",
-          name_helper: "The public name of your application, visible to your users.",
+          name_helper:
+            "The public name of your application, visible to your users.",
           website_label: "Root Website URL (Optional)",
           website_placeholder: "https://example.com",
-          website_helper: "Allows users to return to your website from the authorization page.",
+          website_helper:
+            "Allows users to return to your website from the authorization page.",
           icon_label: "Logo URL (Optional)",
           icon_placeholder: "https://example.com/logo.png",
-          icon_helper: "The logo displayed on the consent page (must be an image via HTTPS).",
+          icon_helper:
+            "The logo displayed on the consent page (must be an image via HTTPS).",
           contact_label: "Developer Contact (Optional)",
           contact_placeholder: "dev@example.com",
-          contact_helper: "Email used to contact you in case of technical issues with the application.",
+          contact_helper:
+            "Email used to contact you in case of technical issues with the application.",
           tos_label: "Terms of Service (Optional)",
           tos_placeholder: "https://example.com/tos",
           tos_helper: "Link to the application's terms of service.",
@@ -590,9 +624,11 @@ const resources = {
           redirects_placeholder: "https://app.example.com/callback",
           redirects_add: "Add",
           redirects_none: "No URI added yet.",
-          redirects_helper: "These URIs will be used to redirect the user after authorizing your application. They must be exact matches. IP addresses are forbidden.",
+          redirects_helper:
+            "These URIs will be used to redirect the user after authorizing your application. They must be exact matches. IP addresses are forbidden.",
           permissions_label: "Permissions",
-          permissions_helper: "Permissions granted to the application that it can request from the user.",
+          permissions_helper:
+            "Permissions granted to the application that it can request from the user.",
           danger_zone_title: "Danger Zone",
           regenerate_secret: "Regenerate Secret",
           revoke_tokens: "Revoke Current Access",
@@ -602,52 +638,61 @@ const resources = {
           saving: "Saving...",
           create: "Create",
           close: "Close",
-          redirects_error_invalid: "This URI is already added."
+          redirects_error_invalid: "This URI is already added.",
         },
-        
+
         secret_modal: {
           created_success: "Application created successfully",
           regenerate_success: "Secret regenerated successfully",
-          secret_warning: "Make sure to copy your Client Secret now. You won't be able to see it again!",
+          secret_warning:
+            "Make sure to copy your Client Secret now. You won't be able to see it again!",
           security_notice: "Important Security Notice",
-          security_notice_desc: "This is the only time you will see this Client Secret. Store it somewhere safe!",
+          security_notice_desc:
+            "This is the only time you will see this Client Secret. Store it somewhere safe!",
           client_id: "Client ID",
           your_client_secret: "Your Client Secret",
         },
 
         regenerate_modal: {
           title: "Regenerate Secret",
-          confirm: "Warning: The old secret will be invalidated immediately. Are you sure you want to continue?",
+          confirm:
+            "Warning: The old secret will be invalidated immediately. Are you sure you want to continue?",
           regenerating: "Regenerating...",
-          button: "Regenerate Secret"
+          button: "Regenerate Secret",
         },
 
         delete_modal: {
           title: "Delete Application",
-          confirm: "Are you sure? This action is irreversible and will destroy access for users connected via this application.",
+          confirm:
+            "Are you sure? This action is irreversible and will destroy access for users connected via this application.",
           deleting: "Deleting...",
-          button: "Delete Permanently"
+          button: "Delete Permanently",
         },
 
         revoke_modal: {
           title: "Revoke API Access",
-          confirm: "All users of this application will be forced to re-authenticate before they can use it again. This action is irreversible.",
+          confirm:
+            "All users of this application will be forced to re-authenticate before they can use it again. This action is irreversible.",
           revoking: "Revoking...",
-          button: "Revoke"
+          button: "Revoke",
         },
-        
+
         scopes: {
           openid: "OpenID (Required)",
           openid_desc: "Allows user authentication via OpenID Connect.",
           profile: "Public Profile",
-          profile_desc: "Allows the application to access basic user information (name, avatar).",
+          profile_desc:
+            "Allows the application to access basic user information (name, avatar).",
           email: "Email Address",
-          email_desc: "Allows the application to access the user's email address.",
+          email_desc:
+            "Allows the application to access the user's email address.",
           timetable: "Read Timetable",
-          timetable_desc: "Allows the application to read the user's timetable and course details.",
+          timetable_desc:
+            "Allows the application to read the user's timetable and course details.",
           offline_access: "Offline Access",
-          offline_access_desc: "Allows the application to maintain access even when the user is inactive."
-        }
+          offline_access_desc:
+            "Allows the application to maintain access even when the user is inactive.",
+        },
       },
       consent: {
         loading: "Loading...",

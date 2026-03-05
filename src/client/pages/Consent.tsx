@@ -26,6 +26,31 @@ interface AppMetadata {
   requestedPermissions?: string[];
 }
 
+interface Timetable {
+  id: string;
+  providerId: string;
+  schoolId: string;
+  syncInterval: number;
+  lastSyncedAt?: string | number | Date;
+  courses?: unknown[];
+}
+
+interface Provider {
+  id: string;
+  name: string;
+  logo?: string;
+  schools?: { id: string; name: string; logo?: string }[];
+}
+
+interface UserWithLanguage {
+  id: string;
+  email: string;
+  name?: string;
+  image?: string;
+  language?: string;
+  emailVerified?: boolean;
+}
+
 export default function Consent() {
   const { t, i18n } = useTranslation();
 
@@ -59,13 +84,18 @@ export default function Consent() {
 
   // Sync language with user preference only once on load
   useEffect(() => {
-    const user = session?.user as any;
+    const user = session?.user as UserWithLanguage | undefined;
     const sessionLang = user?.language;
     if (sessionLang && !langInitialized) {
       i18n.changeLanguage(sessionLang);
       setLangInitialized(true);
     }
-  }, [(session?.user as any)?.language, i18n, langInitialized, session?.user]);
+  }, [
+    (session?.user as UserWithLanguage | undefined)?.language,
+    i18n,
+    langInitialized,
+    session?.user,
+  ]);
   const [searchParams] = useSearchParams();
   const consentCode = searchParams.get("consent_code");
   const clientId = searchParams.get("client_id");
@@ -79,10 +109,8 @@ export default function Consent() {
   const [isValidatingCode, setIsValidatingCode] = useState(true);
   const [isCodeValid, setIsCodeValid] = useState(false);
 
-  // biome-ignore lint/suspicious/noExplicitAny: error type is unknown
-  const [timetables, setTimetables] = useState<any[]>([]);
-  // biome-ignore lint/suspicious/noExplicitAny: error type is unknown
-  const [providers, setProviders] = useState<any[]>([]);
+  const [timetables, setTimetables] = useState<Timetable[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedTimetables, setSelectedTimetables] = useState<string[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -105,8 +133,7 @@ export default function Consent() {
     message: string;
   } | null>(null);
 
-  // biome-ignore lint/suspicious/noExplicitAny: error type is unknown
-  const selectedProvider = providers.find((p: any) => p.id === providerId);
+  const selectedProvider = providers.find((p) => p.id === providerId);
 
   // Auto-select first school when provider changes
   useEffect(() => {
@@ -160,8 +187,7 @@ export default function Consent() {
       if (res.ok) {
         const data = await res.json();
         setTimetables(data);
-        // biome-ignore lint/suspicious/noExplicitAny: error type is unknown
-        setSelectedTimetables(data.map((t: any) => t.id));
+        setSelectedTimetables(data.map((t: Timetable) => t.id));
       }
     } catch (err) {
       console.error("Failed to fetch timetables", err);
@@ -202,10 +228,10 @@ export default function Consent() {
           message: t("home.resend_success"),
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setResendStatus({
         type: "error",
-        message: err.message || t("home.resend_error"),
+        message: (err as Error).message || t("home.resend_error"),
       });
     } finally {
       setResendingEmail(false);
@@ -255,7 +281,7 @@ export default function Consent() {
         setTimetables(newData);
         setSelectedTimetables((prev) => [...prev, data.timetable.id]);
       }
-      // biome-ignore lint/suspicious/noExplicitAny: error type is unknown
+      // biome-ignore lint/suspicious/noExplicitAny: Error object from fetch
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -295,7 +321,7 @@ export default function Consent() {
         // Redirect to callback
         window.location.href = response.data.redirectURI;
       }
-      // biome-ignore lint/suspicious/noExplicitAny: error type is unknown
+      // biome-ignore lint/suspicious/noExplicitAny: authClient error
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -369,9 +395,7 @@ export default function Consent() {
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
             {t("consent.invalid_code_title")}
           </h1>
-          <p className="text-gray-500 mb-8">
-            {t("consent.invalid_code_desc")}
-          </p>
+          <p className="text-gray-500 mb-8">{t("consent.invalid_code_desc")}</p>
         </div>
         <div className="mt-8 pb-8">
           <Footer />
@@ -533,14 +557,16 @@ export default function Consent() {
               </h1>
               {appInfo && (
                 <div className="flex justify-center">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${appInfo.isInternal ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-orange-50 text-orange-700 border-orange-200"}`}>
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${appInfo.isInternal ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-orange-50 text-orange-700 border-orange-200"}`}
+                  >
                     {appInfo.isInternal ? (
                       <>
                         <Info className="w-3.5 h-3.5" />
                         {t("consent.internal_app")}
                       </>
                     ) : (
-                     <>
+                      <>
                         <TriangleAlert className="w-3.5 h-3.5" />
                         {t("consent.external_app")}
                       </>
@@ -679,12 +705,10 @@ export default function Consent() {
                     <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
                       {timetables.map((timetable) => {
                         const provider = providers.find(
-                          // biome-ignore lint/suspicious/noExplicitAny: error type is unknown
-                          (p: any) => p.id === timetable.providerId
+                          (p) => p.id === timetable.providerId
                         );
                         const school = provider?.schools?.find(
-                          // biome-ignore lint/suspicious/noExplicitAny: error type is unknown
-                          (s: any) => s.id === timetable.schoolId
+                          (s) => s.id === timetable.schoolId
                         );
                         return (
                           <label
@@ -820,7 +844,10 @@ export default function Consent() {
                 metadata.privacyPolicyLink) && (
                 <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-                    {t("consent.app_information", "Informations de l'application")}
+                    {t(
+                      "consent.app_information",
+                      "Informations de l'application"
+                    )}
                   </h3>
                   <div className="space-y-3 text-sm">
                     {metadata.website && (

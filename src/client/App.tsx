@@ -3,10 +3,10 @@ import Consent from "./pages/Consent";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (

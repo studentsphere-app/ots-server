@@ -24,13 +24,19 @@ services:
     volumes:
       - app_data:/data
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   redis:
     image: redis:alpine
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
 volumes:

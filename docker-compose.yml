@@ -22,7 +22,8 @@ services:
     volumes:
       - app_data:/data
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   redis:
@@ -31,6 +32,11 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   caddy:

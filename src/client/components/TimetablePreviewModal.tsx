@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import DatePicker from "./DatePicker";
 
 export interface PreviewCourse {
   id: string;
@@ -70,6 +71,7 @@ export default function TimetablePreviewModal({
   const [selectedCourse, setSelectedCourse] = useState<PreviewCourse | null>(
     null
   );
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const locale = i18n.language || "fr-FR";
 
@@ -146,22 +148,46 @@ export default function TimetablePreviewModal({
             >
               {t("preview_modal.today")}
             </button>
-            <div className="flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden ml-2">
+            <div className="flex items-center bg-white border border-gray-300 rounded-lg ml-2">
               <button
                 type="button"
                 onClick={goToPreviousWeek}
-                className="p-2 hover:bg-gray-50 text-gray-600 border-r border-gray-300"
+                className="p-2 hover:bg-gray-50 text-gray-600 border-r border-gray-300 rounded-l-[7px]"
               >
                 <ChevronLeft size={20} />
               </button>
-              <div className="px-4 py-2 text-sm font-medium text-gray-700 flex items-center gap-2">
-                <CalendarIcon size={16} className="text-gray-400" />
-                {t("preview_modal.week")}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDatePicker(!showDatePicker);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 flex items-center gap-2 hover:bg-gray-50 cursor-pointer transition-colors group"
+                >
+                  <CalendarIcon
+                    size={16}
+                    className="text-gray-400 group-hover:text-[#37B7D5] transition-colors"
+                  />
+                  <span className="group-hover:text-[#37B7D5] transition-colors">
+                    {t("preview_modal.week")}
+                  </span>
+                </button>
+                {showDatePicker && (
+                  <DatePicker
+                    selectedDate={currentDate}
+                    onSelect={(date) => {
+                      setCurrentDate(date);
+                      setShowDatePicker(false);
+                    }}
+                    onClose={() => setShowDatePicker(false)}
+                  />
+                )}
               </div>
               <button
                 type="button"
                 onClick={goToNextWeek}
-                className="p-2 hover:bg-gray-50 text-gray-600 border-l border-gray-300"
+                className="p-2 hover:bg-gray-50 text-gray-600 border-l border-gray-300 rounded-r-[7px]"
               >
                 <ChevronRight size={20} />
               </button>
@@ -238,94 +264,95 @@ export default function TimetablePreviewModal({
                         ></div>
                       ))}
 
-                    {/* Rendu des cartes de cours */}
-                    {dayEvents.map((course) => {
-                      const startDate = parseUTCAsLocal(course.start);
-                      const endDate = parseUTCAsLocal(course.end);
+                      {/* Rendu des cartes de cours */}
+                      {dayEvents.map((course) => {
+                        const startDate = parseUTCAsLocal(course.start);
+                        const endDate = parseUTCAsLocal(course.end);
 
-                      const startHour =
-                        startDate.getHours() + startDate.getMinutes() / 60;
-                      const duration =
-                        (endDate.getTime() - startDate.getTime()) /
-                        (1000 * 60 * 60);
+                        const startHour =
+                          startDate.getHours() + startDate.getMinutes() / 60;
+                        const duration =
+                          (endDate.getTime() - startDate.getTime()) /
+                          (1000 * 60 * 60);
 
-                      // Calcul de la position (top) et de la hauteur (height)
-                      const top = Math.max(
-                        0,
-                        (startHour - hours[0]) * HOUR_HEIGHT
-                      );
-                      const height = duration * HOUR_HEIGHT;
+                        // Calcul de la position (top) et de la hauteur (height)
+                        const top = Math.max(
+                          0,
+                          (startHour - hours[0]) * HOUR_HEIGHT
+                        );
+                        const height = duration * HOUR_HEIGHT;
 
-                      // Si le cours commence après la fin de la grille, on l'ignore
-                      if (startHour > hours[hours.length - 1] + 1) return null;
+                        // Si le cours commence après la fin de la grille, on l'ignore
+                        if (startHour > hours[hours.length - 1] + 1)
+                          return null;
 
-                      const isHexColor = course.color?.startsWith("#");
-                      const hexColor = course.color as string;
-                      const colorClasses = isHexColor
-                        ? "text-gray-900 border-2"
-                        : course.color ||
-                          "bg-[#37B7D5]/20 border-[#37B7D5]/40 text-[#1A7A90]";
+                        const isHexColor = course.color?.startsWith("#");
+                        const hexColor = course.color as string;
+                        const colorClasses = isHexColor
+                          ? "text-gray-900 border-2"
+                          : course.color ||
+                            "bg-[#37B7D5]/20 border-[#37B7D5]/40 text-[#1A7A90]";
 
-                      return (
-                        // biome-ignore lint/a11y/useSemanticElements: styling constraints
-                        <div
-                          key={course.id}
-                          onClick={() => setSelectedCourse(course)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              setSelectedCourse(course);
-                            }
-                          }}
-                          role="button"
-                          tabIndex={0}
-                          className={`absolute left-0 right-0 p-2 text-sm overflow-hidden border transition-all z-10 hover:opacity-100 cursor-pointer ${colorClasses}`}
-                          style={{
-                            top: `${top}px`,
-                            height: `${height}px`,
-                            ...(isHexColor
-                              ? {
-                                  backgroundColor: `${hexColor}08`,
-                                  borderColor: hexColor,
-                                }
-                              : {}),
-                          }}
-                        >
+                        return (
+                          // biome-ignore lint/a11y/useSemanticElements: styling constraints
                           <div
-                            className="font-semibold truncate"
-                            title={course.subject}
+                            key={course.id}
+                            onClick={() => setSelectedCourse(course)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                setSelectedCourse(course);
+                              }
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            className={`absolute left-0 right-0 p-2 text-sm overflow-hidden border transition-all z-10 hover:opacity-100 cursor-pointer ${colorClasses}`}
+                            style={{
+                              top: `${top}px`,
+                              height: `${height}px`,
+                              ...(isHexColor
+                                ? {
+                                    backgroundColor: `${hexColor}08`,
+                                    borderColor: hexColor,
+                                  }
+                                : {}),
+                            }}
                           >
-                            {course.subject}
+                            <div
+                              className="font-semibold truncate"
+                              title={course.subject}
+                            >
+                              {course.subject}
+                            </div>
+                            <div className="text-xs opacity-90 mt-1 flex items-center gap-1 truncate">
+                              <Clock size={12} className="shrink-0" />{" "}
+                              {formatTime(startDate, locale)} -{" "}
+                              {formatTime(endDate, locale)}
+                            </div>
+                            {height >= 60 && ( // N'afficher ces infos que si la carte est assez grande (> 1h)
+                              <>
+                                {course.location && (
+                                  <div
+                                    className="text-xs opacity-90 mt-1 flex items-center gap-1 truncate"
+                                    title={course.location}
+                                  >
+                                    <MapPin size={12} className="shrink-0" />{" "}
+                                    {course.location}
+                                  </div>
+                                )}
+                                {course.teacher && (
+                                  <div
+                                    className="text-xs opacity-90 mt-1 flex items-center gap-1 truncate"
+                                    title={course.teacher}
+                                  >
+                                    <User size={12} className="shrink-0" />{" "}
+                                    {course.teacher}
+                                  </div>
+                                )}
+                              </>
+                            )}
                           </div>
-                          <div className="text-xs opacity-90 mt-1 flex items-center gap-1 truncate">
-                            <Clock size={12} className="shrink-0" />{" "}
-                            {formatTime(startDate, locale)} -{" "}
-                            {formatTime(endDate, locale)}
-                          </div>
-                          {height >= 60 && ( // N'afficher ces infos que si la carte est assez grande (> 1h)
-                            <>
-                              {course.location && (
-                                <div
-                                  className="text-xs opacity-90 mt-1 flex items-center gap-1 truncate"
-                                  title={course.location}
-                                >
-                                  <MapPin size={12} className="shrink-0" />{" "}
-                                  {course.location}
-                                </div>
-                              )}
-                              {course.teacher && (
-                                <div
-                                  className="text-xs opacity-90 mt-1 flex items-center gap-1 truncate"
-                                  title={course.teacher}
-                                >
-                                  <User size={12} className="shrink-0" />{" "}
-                                  {course.teacher}
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -380,14 +407,17 @@ export default function TimetablePreviewModal({
                     {t("course_details.time")}
                   </div>
                   <div className="text-base text-gray-900 capitalize">
-                    {parseUTCAsLocal(selectedCourse.start).toLocaleDateString(locale, {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                    })}
+                    {parseUTCAsLocal(selectedCourse.start).toLocaleDateString(
+                      locale,
+                      {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                      }
+                    )}
                     <br />
-                    {formatTime(parseUTCAsLocal(selectedCourse.start), locale)} -{" "}
-                    {formatTime(parseUTCAsLocal(selectedCourse.end), locale)}
+                    {formatTime(parseUTCAsLocal(selectedCourse.start), locale)}{" "}
+                    - {formatTime(parseUTCAsLocal(selectedCourse.end), locale)}
                   </div>
                 </div>
               </div>

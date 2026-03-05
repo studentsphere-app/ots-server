@@ -75,7 +75,30 @@ const devAppSchema = z.object({
     .optional(),
 });
 
-const AVAILABLE_SCOPES_KEYS = [
+interface DevApp {
+  id: string;
+  clientId: string;
+  name: string;
+  icon?: string;
+  createdAt: string | number | Date;
+  redirectUrls?: string;
+  metadataParsed?: {
+    website?: string;
+    requestedPermissions?: string[];
+    developerContact?: string;
+    tosLink?: string;
+    privacyPolicyLink?: string;
+  };
+}
+
+interface Scope {
+  id: string;
+  labelKey: string;
+  descriptionKey: string;
+  required?: boolean;
+}
+
+const AVAILABLE_SCOPES_KEYS: Scope[] = [
   {
     id: "openid",
     labelKey: "dev_apps.scopes.openid",
@@ -144,11 +167,13 @@ export default function Settings() {
   const [selectedTimetables, setSelectedTimetables] = useState<string[]>([]);
 
   // Developer Apps state
-  const [devApps, setDevApps] = useState<any[]>([]);
+  const [devApps, setDevApps] = useState<DevApp[]>([]);
   const [loadingDevApps, setLoadingDevApps] = useState(false);
   const [devAppsError, setDevAppsError] = useState("");
   const [showCreateDevAppModal, setShowCreateDevAppModal] = useState(false);
-  const [showEditDevAppModal, setShowEditDevAppModal] = useState<any>(null);
+  const [showEditDevAppModal, setShowEditDevAppModal] = useState<DevApp | null>(
+    null
+  );
   const [showDevAppSecretModal, setShowDevAppSecretModal] = useState<{
     clientId: string;
     clientSecret: string;
@@ -456,8 +481,7 @@ export default function Settings() {
         }
       );
       const data = await res.json();
-      if (!res.ok)
-        throw new Error(data.message || "Failed to revoke tokens");
+      if (!res.ok) throw new Error(data.message || "Failed to revoke tokens");
 
       setShowRevokeTokensModal(null);
     } catch (err) {
@@ -1320,9 +1344,7 @@ export default function Settings() {
 
                   {loadingDevApps ? (
                     <div className="text-center py-12">
-                      <p className="text-gray-500">
-                        {t("dev_apps.loading")}
-                      </p>
+                      <p className="text-gray-500">{t("dev_apps.loading")}</p>
                     </div>
                   ) : devApps.length === 0 ? (
                     <div className="bg-gray-50 rounded-xl p-12 text-center border border-dashed border-gray-300">
@@ -2129,6 +2151,7 @@ export default function Settings() {
                       : t("dev_apps.modal.edit_title")}
                   </h3>
                   <button
+                    type="button"
                     onClick={() => {
                       setShowCreateDevAppModal(false);
                       setShowEditDevAppModal(null);
@@ -2136,6 +2159,7 @@ export default function Settings() {
                     className="text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <svg
+                      aria-label="Close"
                       className="w-6 h-6"
                       fill="none"
                       stroke="currentColor"
@@ -2164,10 +2188,14 @@ export default function Settings() {
                       {showEditDevAppModal && (
                         <div className="flex flex-col sm:flex-row gap-4">
                           <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            <label
+                              htmlFor="dev-app-id"
+                              className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
+                            >
                               {t("dev_apps.modal.app_id")}
                             </label>
                             <input
+                              id="dev-app-id"
                               type="text"
                               readOnly
                               value={showEditDevAppModal.id}
@@ -2175,10 +2203,14 @@ export default function Settings() {
                             />
                           </div>
                           <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            <label
+                              htmlFor="dev-app-client-id"
+                              className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
+                            >
                               {t("dev_apps.modal.client_id")}
                             </label>
                             <input
+                              id="dev-app-client-id"
                               type="text"
                               readOnly
                               value={showEditDevAppModal.clientId}
@@ -2189,10 +2221,14 @@ export default function Settings() {
                       )}
 
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label
+                          htmlFor="dev-app-name"
+                          className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
+                        >
                           {t("dev_apps.modal.name_label")}
                         </label>
                         <input
+                          id="dev-app-name"
                           type="text"
                           required
                           value={devAppName}
@@ -2211,10 +2247,14 @@ export default function Settings() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label
+                          htmlFor="dev-app-website"
+                          className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
+                        >
                           {t("dev_apps.modal.website_label")}
                         </label>
                         <input
+                          id="dev-app-website"
                           type="url"
                           value={devAppWebsite}
                           onChange={(e) => setDevAppWebsite(e.target.value)}
@@ -2232,10 +2272,14 @@ export default function Settings() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label
+                          htmlFor="dev-app-icon"
+                          className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
+                        >
                           {t("dev_apps.modal.icon_label")}
                         </label>
                         <input
+                          id="dev-app-icon"
                           type="url"
                           value={devAppIcon}
                           onChange={(e) => setDevAppIcon(e.target.value)}
@@ -2253,10 +2297,14 @@ export default function Settings() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label
+                          htmlFor="dev-app-contact"
+                          className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
+                        >
                           {t("dev_apps.modal.contact_label")}
                         </label>
                         <input
+                          id="dev-app-contact"
                           type="email"
                           value={devAppDeveloperContact}
                           onChange={(e) =>
@@ -2277,10 +2325,14 @@ export default function Settings() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                          <label
+                            htmlFor="dev-app-tos"
+                            className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
+                          >
                             {t("dev_apps.modal.tos_label")}
                           </label>
                           <input
+                            id="dev-app-tos"
                             type="url"
                             value={devAppTosLink}
                             onChange={(e) => setDevAppTosLink(e.target.value)}
@@ -2297,17 +2349,23 @@ export default function Settings() {
                           </p>
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                          <label
+                            htmlFor="dev-app-privacy"
+                            className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
+                          >
                             {t("dev_apps.modal.privacy_label")}
                           </label>
                           <input
+                            id="dev-app-privacy"
                             type="url"
                             value={devAppPrivacyPolicyLink}
                             onChange={(e) =>
                               setDevAppPrivacyPolicyLink(e.target.value)
                             }
                             className={`w-full px-4 py-3 bg-gray-50 border ${devAppFormErrors.privacyPolicyLink ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:ring-[#37B7D5]"} rounded-xl focus:ring-2 focus:border-transparent sm:text-sm outline-none transition-all`}
-                            placeholder={t("dev_apps.modal.privacy_placeholder")}
+                            placeholder={t(
+                              "dev_apps.modal.privacy_placeholder"
+                            )}
                           />
                           {devAppFormErrors.privacyPolicyLink && (
                             <p className="mt-1.5 text-xs text-red-500 font-bold">
@@ -2324,11 +2382,15 @@ export default function Settings() {
                     {/* Right Column */}
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label
+                          htmlFor="dev-app-redirects"
+                          className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
+                        >
                           {t("dev_apps.modal.redirects_label")}
                         </label>
                         <div className="flex gap-2 mb-3">
                           <input
+                            id="dev-app-redirects"
                             type="url"
                             value={devAppRedirectInput}
                             onChange={(e) =>
@@ -2339,13 +2401,26 @@ export default function Settings() {
                                 e.preventDefault();
                                 const val = devAppRedirectInput.trim();
                                 if (val) {
-                                  const parseResult = appUrlSchema.safeParse(val);
+                                  const parseResult =
+                                    appUrlSchema.safeParse(val);
                                   if (!parseResult.success) {
-                                    setDevAppFormErrors({ ...devAppFormErrors, redirectUrls: parseResult.error.issues[0].message });
+                                    setDevAppFormErrors({
+                                      ...devAppFormErrors,
+                                      redirectUrls:
+                                        parseResult.error.issues[0].message,
+                                    });
                                   } else if (devAppRedirects.includes(val)) {
-                                    setDevAppFormErrors({ ...devAppFormErrors, redirectUrls: t("dev_apps.modal.redirects_error_invalid") });
+                                    setDevAppFormErrors({
+                                      ...devAppFormErrors,
+                                      redirectUrls: t(
+                                        "dev_apps.modal.redirects_error_invalid"
+                                      ),
+                                    });
                                   } else {
-                                    setDevAppRedirects([...devAppRedirects, val]);
+                                    setDevAppRedirects([
+                                      ...devAppRedirects,
+                                      val,
+                                    ]);
                                     setDevAppRedirectInput("");
                                     const nextErrors = { ...devAppFormErrors };
                                     delete nextErrors.redirectUrls;
@@ -2355,7 +2430,9 @@ export default function Settings() {
                               }
                             }}
                             className={`flex-1 px-4 py-3 bg-gray-50 border ${devAppFormErrors.redirectUrls ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:ring-[#37B7D5]"} rounded-xl focus:ring-2 focus:border-transparent sm:text-sm outline-none transition-all`}
-                            placeholder={t("dev_apps.modal.redirects_placeholder")}
+                            placeholder={t(
+                              "dev_apps.modal.redirects_placeholder"
+                            )}
                           />
                           <button
                             type="button"
@@ -2364,9 +2441,18 @@ export default function Settings() {
                               if (val) {
                                 const parseResult = appUrlSchema.safeParse(val);
                                 if (!parseResult.success) {
-                                  setDevAppFormErrors({ ...devAppFormErrors, redirectUrls: parseResult.error.issues[0].message });
+                                  setDevAppFormErrors({
+                                    ...devAppFormErrors,
+                                    redirectUrls:
+                                      parseResult.error.issues[0].message,
+                                  });
                                 } else if (devAppRedirects.includes(val)) {
-                                  setDevAppFormErrors({ ...devAppFormErrors, redirectUrls: t("dev_apps.modal.redirects_error_invalid") });
+                                  setDevAppFormErrors({
+                                    ...devAppFormErrors,
+                                    redirectUrls: t(
+                                      "dev_apps.modal.redirects_error_invalid"
+                                    ),
+                                  });
                                 } else {
                                   setDevAppRedirects([...devAppRedirects, val]);
                                   setDevAppRedirectInput("");
@@ -2390,7 +2476,7 @@ export default function Settings() {
                         <div className="space-y-2 mb-1.5 max-h-40 overflow-y-auto pr-1">
                           {devAppRedirects.map((uri, idx) => (
                             <div
-                              key={idx}
+                              key={uri}
                               className="flex justify-between items-center bg-gray-50 px-4 py-3 rounded-xl border border-gray-200 group"
                             >
                               <span className="text-sm text-gray-700 truncate font-mono">
@@ -2423,9 +2509,9 @@ export default function Settings() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <h4 className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                           {t("dev_apps.modal.permissions_label")}
-                        </label>
+                        </h4>
                         <p className="mb-3 text-xs text-gray-400">
                           {t("dev_apps.modal.permissions_helper")}
                         </p>
@@ -2442,7 +2528,10 @@ export default function Settings() {
                               <div className="pt-0.5">
                                 <input
                                   type="checkbox"
-                                  checked={scope.required || devAppPermissions.includes(scope.id)}
+                                  checked={
+                                    scope.required ||
+                                    devAppPermissions.includes(scope.id)
+                                  }
                                   disabled={scope.required}
                                   onChange={(e) => {
                                     if (scope.required) return;
@@ -2464,13 +2553,13 @@ export default function Settings() {
                               </div>
                               <div className="flex-1">
                                 <p className="text-sm font-bold text-gray-900">
-                                  {t(scope.labelKey as any)}{" "}
+                                  {t(scope.labelKey)}{" "}
                                   <span className="font-mono text-xs font-normal bg-gray-200 px-1.5 py-0.5 rounded text-gray-600 ml-2">
                                     {scope.id}
                                   </span>
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
-                                  {t(scope.descriptionKey as any)}
+                                  {t(scope.descriptionKey)}
                                 </p>
                               </div>
                             </label>
@@ -2537,7 +2626,11 @@ export default function Settings() {
                     </button>
                     <button
                       type="submit"
-                      disabled={isSavingDevApp || !devAppName.trim() || devAppRedirects.length === 0}
+                      disabled={
+                        isSavingDevApp ||
+                        !devAppName.trim() ||
+                        devAppRedirects.length === 0
+                      }
                       className="px-6 py-2 bg-[#37B7D5] text-white rounded-xl font-bold hover:bg-[#2A9CB8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSavingDevApp
@@ -2626,11 +2719,15 @@ export default function Settings() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label
+                    htmlFor="dev-app-secret-client-id"
+                    className="block text-sm font-bold text-gray-700 mb-2"
+                  >
                     {t("dev_apps.secret_modal.client_id")}
                   </label>
                   <div className="flex items-center gap-2">
                     <input
+                      id="dev-app-secret-client-id"
                       type="text"
                       value={showDevAppSecretModal.clientId}
                       readOnly
@@ -2640,11 +2737,15 @@ export default function Settings() {
                 </div>
 
                 <div className="mb-6">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label
+                    htmlFor="dev-app-secret-client-secret"
+                    className="block text-sm font-bold text-gray-700 mb-2"
+                  >
                     {t("dev_apps.secret_modal.your_client_secret")}
                   </label>
                   <div className="flex items-center gap-2">
                     <input
+                      id="dev-app-secret-client-secret"
                       type="text"
                       value={showDevAppSecretModal.clientSecret}
                       readOnly
@@ -2718,10 +2819,14 @@ export default function Settings() {
                   <button
                     type="button"
                     disabled={isSavingDevApp}
-                    onClick={() => handleRegenerateSecret(showRegenerateSecretModal)}
+                    onClick={() =>
+                      handleRegenerateSecret(showRegenerateSecretModal)
+                    }
                     className="flex-1 flex items-center justify-center rounded-xl px-4 py-3 bg-amber-500 text-sm font-bold text-white hover:bg-amber-600 transition-all disabled:opacity-50"
                   >
-                    {isSavingDevApp ? t("dev_apps.regenerate_modal.regenerating") : t("dev_apps.regenerate_modal.button")}
+                    {isSavingDevApp
+                      ? t("dev_apps.regenerate_modal.regenerating")
+                      : t("dev_apps.regenerate_modal.button")}
                   </button>
                 </div>
               </div>
