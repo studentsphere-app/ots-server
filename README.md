@@ -7,6 +7,25 @@ The official server implementation for the Open Timetable Scraper (OTS).
 
 This application serves as both the backend API and the frontend dashboard. It manages authentication, schedules scraping jobs via providers, stores timetable data, and exposes an API for other applications to consume.
 
+> [!CAUTION]
+> ## ⚖️ LEGAL DISCLAIMER & LIMITATION OF LIABILITY
+>
+> **This project is an independent open-source tool. It is NOT affiliated with, authorized, maintained, sponsored, or endorsed by:**
+> **The IGENTIA Education Group / Compétences & Développement (C&D) and all its member schools** (including but not limited to: **EPSI, WIS, IFAG, IHEDREA, IDRAC, IET, SUP'DE COM, 3A, ESAIL, VIVA MUNDI**, etc.). **The developers and operators of the WigorServices platform** or any other direct school portals/SaaS providers integrated into this tool.
+>
+> ### Scope of Non-Affiliation
+> This disclaimer applies to **all current and future providers** included in this package. Any mention of a specific institution, school name, or portal is done strictly for **identification and technical compatibility purposes**.
+>
+> ### Responsible Use & Compliance
+> **Educational Purpose**: This tool is provided for **educational purposes** and to facilitate interoperability. 
+> * **User Responsibility**: It is the end-user's **sole responsibility** to ensure that using this scraper/provider complies with their specific institution's **Terms of Service (ToS)**, internal regulations, and local laws (e.g., GDPR, automated data access).
+> * **Account Risk**: The developer assumes **no liability** for any consequences resulting from the use of this tool, including but not limited to: account suspensions, IP bans, access blocks, or disciplinary actions by the schools or groups mentioned above.
+>
+> ### "As Is" Warranty
+> The software is provided **"as is"**, without warranty of any kind. As this tool relies on parsing third-party web structures, functionality may break at any time due to updates on the official portals.
+>
+> **By using this package or its providers, you acknowledge and agree to these terms in full.**
+
 ## Features
 
 - **Multi-Provider Support**: Seamlessly integrates with any OTS-compliant provider (like `@studentsphere/ots-provider-wigor`).
