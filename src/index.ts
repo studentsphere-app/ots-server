@@ -85,11 +85,36 @@ app.use((_req, _res, next) => {
 // prefix-stripping behavior which breaks Better Auth's internal routing.
 app.use((req, _res, next) => {
   if (isDev || process.env.DEBUG_AUTH === "true") {
-    if (req.originalUrl.startsWith("/api/auth") || req.originalUrl.startsWith("/.well-known")) {
+    if (
+      req.originalUrl.startsWith("/api/auth") ||
+      req.originalUrl.startsWith("/.well-known")
+    ) {
       console.log(`[AUTH] ${req.method} ${req.originalUrl}`);
     }
   }
   next();
+});
+
+/**
+ * GET /.well-known/ots
+ * Returns information about the OTS server and available providers.
+ */
+app.get("/.well-known/ots", (_req, res) => {
+  console.log(
+    `[DEBUG] /.well-known/ots hit: ${_req.method} ${_req.originalUrl}`
+  );
+  const providerList = providers.map((p) => ({
+    id: p.id,
+    name: p.name,
+    logo: p.logo,
+    schools: p.schools,
+  }));
+
+  res.json({
+    ots_spec: "1.0",
+    service: "open-timetable-scraper",
+    providers: providerList,
+  });
 });
 
 app.use((req, res, next) => {
@@ -135,26 +160,6 @@ app.get("/api/providers", (_req, res) => {
     schools: p.schools,
   }));
   res.json(list);
-});
-
-/**
- * GET /.well-known/ots
- * Returns information about the OTS server and available providers.
- */
-
-app.get("/.well-known/ots", (_req, res) => {
-  const providerList = providers.map((p) => ({
-    id: p.id,
-    name: p.name,
-    logo: p.logo,
-    schools: p.schools,
-  }));
-
-  res.json({
-    ots_spec: "1.0",
-    service: "open-timetable-scraper",
-    providers: providerList,
-  });
 });
 
 /**
@@ -1715,7 +1720,9 @@ if (!isDev) {
     const targetFile = path.join(publicPath, "index.html");
     res.sendFile(targetFile, (err) => {
       if (err) {
-        console.error(`[SPA Error] Could not send index.html: ${err.message}. Path looked at: ${targetFile}`);
+        console.error(
+          `[SPA Error] Could not send index.html: ${err.message}. Path looked at: ${targetFile}`
+        );
         next();
       }
     });
