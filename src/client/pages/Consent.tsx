@@ -4,11 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useSearchParams } from "react-router-dom";
 import Footer from "../components/Footer";
-import {
-  authClient,
-  sendVerificationEmail,
-  useSession,
-} from "../lib/auth-client";
+import { authClient, useSession } from "../lib/auth-client";
 import NotFound from "./NotFound";
 
 interface AppInfo {
@@ -212,15 +208,11 @@ export default function Consent() {
     setResendStatus(null);
     try {
       if (!session?.user?.email) return;
-      const { error } = await sendVerificationEmail({
-        email: session.user.email,
-        callbackURL: window.location.origin,
-      });
 
       if (error) {
         setResendStatus({
           type: "error",
-          message: error.message || t("home.resend_error"),
+          message: t("home.resend_error"),
         });
       } else {
         setResendStatus({
@@ -310,16 +302,15 @@ export default function Consent() {
 
       const response = await authClient.oauth2.consent({
         accept,
-        consent_code: consentCode || undefined,
       });
 
       if (response?.error) {
         throw new Error(response.error.message);
       }
 
-      if (response?.data?.redirectURI) {
+      if (response?.data?.url) {
         // Redirect to callback
-        window.location.href = response.data.redirectURI;
+        window.location.href = response.data.url;
       }
       // biome-ignore lint/suspicious/noExplicitAny: authClient error
     } catch (err: any) {

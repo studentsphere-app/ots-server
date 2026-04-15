@@ -1,7 +1,8 @@
 import { apiKey } from "@better-auth/api-key";
 import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { betterAuth } from "better-auth";
-import { oidcProvider } from "better-auth/plugins";
+import { oauthProvider } from "@better-auth/oauth-provider";
+import { jwt } from "better-auth/plugins";
 import nodemailer from "nodemailer";
 import { PrismaClient } from "./generated/prisma/client.js";
 import "dotenv/config";
@@ -28,7 +29,7 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   trustedOrigins: process.env.TRUSTED_ORIGINS
     ? process.env.TRUSTED_ORIGINS.split(",")
-    : ["http://localhost:5173", "http://localhost:5174"],
+    : ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
   database: prismaAdapter(prisma, {
     provider: "sqlite",
   }),
@@ -179,7 +180,8 @@ export const auth = betterAuth({
     ],
   },
   plugins: [
-    oidcProvider({
+    jwt(),
+    oauthProvider({
       loginPage: process.env.FRONTEND_URL
         ? `${process.env.FRONTEND_URL}/login`
         : "http://localhost:5173/login",
@@ -199,7 +201,7 @@ export const auth = betterAuth({
       },
       accessTokenExpiresIn: 7200, // 2 hours
       refreshTokenExpiresIn: 31536000, // 1 year
-      getAdditionalUserInfoClaim: async ({ scopes }) => {
+      getAdditionalUserInfoClaim: async ({ scopes }: { scopes: string[] }) => {
         if (scopes?.includes("timetable")) {
           return {
             timetable_access: true,
@@ -219,7 +221,7 @@ export const auth = betterAuth({
       rateLimit: {
         enabled: true,
         timeWindow: 1000 * 60 * 60 * 24, // 1 day in ms
-        maxRequests: 100000, 
+        maxRequests: 100000,
       },
     }),
   ],

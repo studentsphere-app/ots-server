@@ -102,6 +102,7 @@ model Course {
   location    String?
   teacher     String?
   color       String?
+  description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   timetable   Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
@@ -224,4 +225,13 @@ model Apikey {
   @@index([referenceId])
   @@index([key])
   @@map("apikey")
+}
+
+model Jwks {
+  id         String   @id
+  publicKey  String
+  privateKey String
+  createdAt  DateTime
+
+  @@map("jwks")
 }

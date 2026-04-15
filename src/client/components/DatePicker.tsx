@@ -94,7 +94,7 @@ export default function DatePicker({
   return (
     <div
       ref={containerRef}
-      className="absolute top-full left-0 mt-2 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200"
+      className="absolute top-full left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 mt-2 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 w-72 max-w-[92vw] animate-in fade-in slide-in-from-top-2 duration-200"
     >
       <div className="flex items-center justify-between mb-4">
         <button

@@ -26,7 +26,7 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isPasswordValid) {
-      setError("Veuillez respecter tous les critères du mot de passe.");
+      setError(t("register.error_password_criteria"));
       return;
     }
     setError("");
@@ -44,14 +44,14 @@ export default function Register() {
       if (signUpError) {
         setError(
           signUpError.message ||
-            "Une erreur est survenue lors de l'inscription."
+            t("register.error_generic")
         );
       } else {
         // Inscription réussie, on redirige vers l'accueil
         window.location.href = "/";
       }
     } catch (err: unknown) {
-      setError((err as Error).message || "Une erreur inattendue est survenue.");
+      setError((err as Error).message || t("register.error_unexpected"));
     } finally {
       setLoading(false);
     }
@@ -264,7 +264,7 @@ export default function Register() {
               disabled={loading || !isPasswordValid}
               className="w-full inline-flex justify-center rounded-xl px-4 py-3 bg-[#37B7D5] text-sm font-bold text-white hover:bg-[#2A9CB8] shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Chargement..." : "S'inscrire"}
+              {loading ? t("login.loading") : t("home.register")}
             </button>
           </div>
         </form>
@@ -274,7 +274,7 @@ export default function Register() {
             href="/login"
             className="text-sm font-semibold text-[#37B7D5] hover:text-[#2A9CB8]"
           >
-            Déjà un compte ? Connectez-vous
+            {t("login.already_have_account")}
           </a>
         </div>
       </div>

@@ -18,7 +18,7 @@ import Footer from "../components/Footer";
 import TimetablePreviewModal, {
   type PreviewCourse,
 } from "../components/TimetablePreviewModal";
-import { sendVerificationEmail } from "../lib/auth-client";
+import { authClient } from "../lib/auth-client";
 
 interface User {
   id: string;
@@ -58,6 +58,43 @@ interface Timetable {
   courses?: PreviewCourse[];
 }
 
+const SCHOOL_LOGOS = [
+  { name: "3A", logo: "/schools/3a.png" },
+  {
+    name: "American Business College",
+    logo: "/schools/american_business_college.png",
+  },
+  {
+    name: "Business Science Institute",
+    logo: "/schools/business_science_institute.png",
+  },
+  { name: "CNVA", logo: "/schools/cnva.png" },
+  { name: "ECM", logo: "/schools/ecm.png" },
+  { name: "EMI", logo: "/schools/emi.png" },
+  { name: "EPSI", logo: "/schools/epsi.png" },
+  { name: "ESA", logo: "/schools/esa.png" },
+  { name: "ESAIL", logo: "/schools/esail.png" },
+  { name: "ESAM", logo: "/schools/esam.png" },
+  { name: "ICD Business School", logo: "/schools/icd_business_school.png" },
+  { name: "ICL", logo: "/schools/icl.png" },
+  { name: "IDRAC Business School", logo: "/schools/idrac_business_school.png" },
+  { name: "IEFT", logo: "/schools/ieft.png" },
+  { name: "IET", logo: "/schools/iet.png" },
+  { name: "IFAG", logo: "/schools/ifag.png" },
+  { name: "IGEFI", logo: "/schools/igefi.png" },
+  { name: "Igensia RH", logo: "/schools/igensia_rh.png" },
+  { name: "IHEDREA", logo: "/schools/ihedrea.png" },
+  { name: "ILERI", logo: "/schools/ileri.png" },
+  { name: "IMIS", logo: "/schools/imis.png" },
+  { name: "IMSI", logo: "/schools/imsi.png" },
+  { name: "IPI", logo: "/schools/ipi.png" },
+  { name: "ISCPA", logo: "/schools/iscpa.png" },
+  { name: "ISMM", logo: "/schools/ismm.png" },
+  { name: "SUP DE COM", logo: "/schools/sup_de_com.png" },
+  { name: "Viva Mundi", logo: "/schools/viva_mundi.png" },
+  { name: "WIS", logo: "/schools/wis.png" },
+];
+
 export default function Home() {
   const { t, i18n } = useTranslation();
   const [session, setSession] = useState<Session | null>(null);
@@ -78,6 +115,10 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUnverifiedModalOpen, setIsUnverifiedModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [timetableIdToDelete, setTimetableIdToDelete] = useState<string | null>(
+    null
+  );
   const [editingTimetable, setEditingTimetable] = useState<Timetable | null>(
     null
   );
@@ -284,17 +325,23 @@ export default function Home() {
     }
   };
 
-  const handleDeleteTimetable = async (id: string) => {
-    if (!window.confirm(t("home.delete_confirm"))) {
-      return;
-    }
+  const handleShowDeleteConfirm = (id: string) => {
+    setTimetableIdToDelete(id);
+    setIsDeleteConfirmOpen(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!timetableIdToDelete) return;
+
+    setLoading(true);
     try {
-      const res = await fetch(`/api/timetables/${id}`, {
+      const res = await fetch(`/api/timetables/${timetableIdToDelete}`, {
         method: "DELETE",
       });
 
       if (res.ok) {
+        setIsDeleteConfirmOpen(false);
+        setTimetableIdToDelete(null);
         fetchTimetables();
       } else {
         const data = await res.json();
@@ -303,6 +350,8 @@ export default function Home() {
     } catch (err) {
       console.error("Failed to delete timetable", err);
       alert(t("home.network_error"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -334,15 +383,21 @@ export default function Home() {
   };
 
   const handleResendVerification = async () => {
+    if (!session?.user?.email) return;
+
     setResendingEmail(true);
     setResendStatus(null);
     try {
-      const { error } = await sendVerificationEmail({
-        email: session?.user.email,
-        callbackURL: window.location.origin,
+      const { error: resendError } = await authClient.sendVerificationEmail({
+        email: session.user.email,
+        callbackURL: window.location.href,
       });
-      if (error) {
-        setResendStatus({ type: "error", message: t("home.resend_error") });
+
+      if (resendError) {
+        setResendStatus({
+          type: "error",
+          message: resendError.message || t("home.resend_error"),
+        });
       } else {
         setResendStatus({ type: "success", message: t("home.resend_success") });
       }
@@ -505,6 +560,32 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Supported Schools Section */}
+        <div className="bg-white py-12 border-t border-gray-100">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-10">
+              <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">
+                {t("landing.schools.title")}
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-8 items-center justify-items-center opacity-60">
+              {SCHOOL_LOGOS.map((school) => (
+                <div
+                  key={school.name}
+                  className="grayscale hover:grayscale-0 transition-all duration-300 hover:opacity-100 hover:scale-110"
+                >
+                  <img
+                    src={school.logo}
+                    alt={school.name}
+                    className="h-16 w-auto object-contain pointer-events-none"
+                    title={school.name}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Features Grid */}
         <div className="bg-gray-50 border-y border-gray-100">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
@@ -650,7 +731,7 @@ export default function Home() {
 
         {/* Footer */}
         <div className="bg-white border-t border-gray-200">
-          <div className="max-w-6xl mx-auto px-4 py-12">
+          <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
             <Footer />
           </div>
         </div>
@@ -661,7 +742,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 sm:py-12 px-3 sm:px-6 lg:px-8">
       {!session.user.emailVerified && (
         <div className="max-w-4xl mx-auto mb-6">
           <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -697,8 +778,8 @@ export default function Home() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="p-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl border border-gray-200 overflow-hidden sm:my-8 my-4 sm:mx-auto">
+        <div className="p-4 sm:p-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 border-b border-gray-100 pb-6 gap-4 sm:gap-0">
             <div className="flex items-center gap-4">
               <Link to="/">
@@ -801,7 +882,7 @@ export default function Home() {
                     return (
                       <div
                         key={timetable.id}
-                        className="bg-white border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-colors"
+                        className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 hover:border-gray-300 transition-colors"
                       >
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
@@ -816,12 +897,9 @@ export default function Home() {
                               {provider?.name || timetable.providerId}
                             </h4>
                           </div>
-                          <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
-                            ID: {timetable.id}
-                          </span>
                         </div>
                         <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3">
                             {!timetable.isSyncing ? (
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
                                 {t("home.active")}
@@ -839,10 +917,10 @@ export default function Home() {
                             <button
                               type="button"
                               onClick={() => setPreviewTimetable(timetable)}
-                              className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                              className="p-2.5 text-gray-400 hover:text-blue-600 rounded-xl hover:bg-blue-50 transition-colors"
                               title={t("home.preview") || "Preview"}
                             >
-                              <Eye size={16} />
+                              <Eye size={20} />
                             </button>
                             <button
                               type="button"
@@ -851,24 +929,31 @@ export default function Home() {
                                 setEditSyncInterval(timetable.syncInterval);
                                 setIsEditModalOpen(true);
                               }}
-                              className="p-1.5 text-gray-400 hover:text-amber-600 rounded-lg hover:bg-amber-50 transition-colors"
+                              className="p-2.5 text-gray-400 hover:text-amber-600 rounded-xl hover:bg-amber-50 transition-colors"
                               title={t("home.edit_interval") || "Edit Interval"}
                             >
-                              <Clock size={16} />
+                              <Clock size={20} />
                             </button>
                             <button
                               type="button"
                               onClick={() =>
-                                handleDeleteTimetable(timetable.id)
+                                handleShowDeleteConfirm(timetable.id)
                               }
-                              className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                              className="p-2.5 text-gray-400 hover:text-red-600 rounded-xl hover:bg-red-50 transition-colors"
                               title={t("home.delete")}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={20} />
                             </button>
                           </div>
                         </div>
                         <div className="text-sm text-gray-500 space-y-2">
+                          <p className="flex justify-between items-center">
+                            <span className="text-gray-400">ID</span>
+                            <span className="font-mono text-gray-400 text-xs">
+                              {timetable.id}
+                            </span>
+                          </p>
+
                           {school && (
                             <div className="flex justify-between items-center">
                               <span className="text-gray-400">
@@ -969,7 +1054,7 @@ export default function Home() {
             </span>
             <div className="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <form onSubmit={handleAddTimetable}>
-                <div className="bg-white px-8 pt-8 pb-6">
+                <div className="bg-white px-4 sm:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-gray-900">
                       {t("home.add_timetable_title")}
@@ -1257,7 +1342,7 @@ export default function Home() {
                   )}
                 </div>
                 {!syncSuccess && (
-                  <div className="bg-gray-50 px-8 py-6 flex flex-row-reverse gap-3">
+                  <div className="bg-gray-50 px-4 sm:px-8 py-4 sm:py-6 flex flex-col sm:flex-row-reverse gap-3">
                     <button
                       type="submit"
                       disabled={loading}
@@ -1367,7 +1452,7 @@ export default function Home() {
             </span>
             <div className="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <form onSubmit={handleUpdateInterval}>
-                <div className="bg-white px-8 pt-8 pb-6">
+                <div className="bg-white px-4 sm:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-gray-900">
                       {t("home.edit_interval_title")}
@@ -1412,7 +1497,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-8 py-6 flex flex-row-reverse gap-3">
+                <div className="bg-gray-50 px-4 sm:px-8 py-4 sm:py-6 flex flex-col sm:flex-row-reverse gap-3">
                   <button
                     type="submit"
                     disabled={loading}
@@ -1433,6 +1518,80 @@ export default function Home() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteConfirmOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div
+              className="fixed inset-0 transition-opacity"
+              aria-hidden="true"
+              onClick={() => {
+                if (!loading) setIsDeleteConfirmOpen(false);
+              }}
+            >
+              <div className="absolute inset-0 bg-gray-900 opacity-50"></div>
+            </div>
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+            <div className="relative z-10 inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-in fade-in zoom-in-95 duration-200">
+              <div className="bg-white px-8 pt-8 pb-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {t("home.delete")}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!loading) setIsDeleteConfirmOpen(false);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <div className="flex flex-col items-center py-4">
+                  <div className="flex items-center justify-center w-16 h-16 mb-6 bg-red-50 rounded-full">
+                    <Trash2 className="w-8 h-8 text-red-500" />
+                  </div>
+                  <p className="text-sm text-gray-500 text-center leading-relaxed max-w-xs">
+                    {t("home.delete_confirm")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 px-4 sm:px-8 py-4 sm:py-6 flex flex-col sm:flex-row-reverse gap-3">
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={loading}
+                  className="flex-1 flex items-center justify-center rounded-xl px-4 py-3 bg-red-600 text-sm font-bold text-white hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    t("home.delete")
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteConfirmOpen(false)}
+                  disabled={loading}
+                  className="flex-1 flex items-center justify-center rounded-xl px-4 py-3 bg-white border border-gray-300 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all"
+                >
+                  {t("home.cancel")}
+                </button>
+              </div>
             </div>
           </div>
         </div>

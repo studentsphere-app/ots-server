@@ -1,28 +1,23 @@
 import { apiKeyClient as separateApiKeyClient } from "@better-auth/api-key/client";
-import { inferAdditionalFields, oidcClient } from "better-auth/client/plugins";
+import { inferAdditionalFields } from "better-auth/client/plugins";
+import { oauthProviderClient } from "@better-auth/oauth-provider/client";
+import type { auth } from "../../auth";
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
   baseURL: window.location.origin,
   plugins: [
-    oidcClient(),
+    oauthProviderClient(),
     separateApiKeyClient(),
-    inferAdditionalFields({
-      user: {
-        language: {
-          type: "string",
-          defaultValue: "fr",
-        },
-      },
-    }),
+    inferAdditionalFields<typeof auth>(),
   ],
 });
 
-export const { signIn, signUp, useSession, signOut } = authClient;
-
-// biome-ignore lint/suspicious/noExplicitAny: library type mismatch
-export const forgetPassword = (authClient as any).forgetPassword;
-// biome-ignore lint/suspicious/noExplicitAny: library type mismatch
-export const resetPassword = (authClient as any).resetPassword;
-// biome-ignore lint/suspicious/noExplicitAny: library type mismatch
-export const sendVerificationEmail = (authClient as any).sendVerificationEmail;
+export const {
+  signIn,
+  signUp,
+  useSession,
+  signOut,
+  requestPasswordReset: forgetPassword,
+  resetPassword,
+} = authClient;

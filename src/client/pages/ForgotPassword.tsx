@@ -2,8 +2,8 @@ import type React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import Footer from "../components/Footer";
 import { forgetPassword } from "../lib/auth-client";
+import Footer from "../components/Footer";
 
 export default function ForgotPassword() {
   const { t } = useTranslation();
@@ -40,7 +40,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-200">
         <div className="flex flex-col items-center">
           <Link to="/">

@@ -26,14 +26,12 @@ export async function renderEmail(
     path.join(__dirname, "templates/emails", `${templateName}.html`),
   ];
 
-  let _templatePath = possiblePaths[0];
   let content = "";
   let loaded = false;
 
   for (const p of possiblePaths) {
     try {
       content = await fs.readFile(p, "utf-8");
-      _templatePath = p;
       loaded = true;
       break;
     } catch {}

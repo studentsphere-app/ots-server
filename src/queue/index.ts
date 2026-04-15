@@ -130,6 +130,7 @@ export async function performSync(timetableId: string) {
           location: c.location,
           teacher: c.teacher,
           color: c.color,
+          description: c.description,
         })),
       });
     }

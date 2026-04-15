@@ -6,6 +6,7 @@ import {
   MapPin,
   User,
   X,
+  FileText,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,6 +20,8 @@ export interface PreviewCourse {
   location?: string | null;
   teacher?: string | null;
   color?: string | null;
+  hash?: string | null;
+  description?: string | null;
 }
 
 interface TimetablePreviewModalProps {
@@ -58,6 +61,50 @@ const parseUTCAsLocal = (dateValue: string | Date) => {
     d.getUTCHours(),
     d.getUTCMinutes()
   );
+};
+
+const COURSE_COLORS = [
+  "#38bdf8", // Sky 400
+  "#fb7185", // Rose 400
+  "#34d399", // Emerald 400
+  "#a78bfa", // Violet 400
+  "#fbbf24", // Amber 400
+  "#818cf8", // Indigo 400
+  "#22d3ee", // Cyan 400
+  "#f472b6", // Pink 400
+  "#fb923c", // Orange 400
+  "#2dd4bf", // Teal 400
+];
+
+const getCourseColor = (seed: string) => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % COURSE_COLORS.length;
+  return COURSE_COLORS[index];
+};
+
+const renderTextWithLinks = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={part}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#37B7D5] hover:underline break-all"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
 };
 
 export default function TimetablePreviewModal({
@@ -103,13 +150,13 @@ export default function TimetablePreviewModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6">
-      {/* Conteneur principal de la modale (max-w-7xl) */}
-      <div className="bg-white w-full max-w-7xl rounded-2xl shadow-2xl flex flex-col overflow-hidden h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white backdrop-blur-sm">
+      {/* Conteneur principal de la modale (fullscreen) */}
+      <div className="bg-white w-full h-full flex flex-col overflow-hidden animate-in fade-in duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white">
           <div>
-            <h2 className="text-md font-semibold text-gray-800">
+            <h2 className="text-sm sm:text-md font-semibold text-gray-800 truncate max-w-[200px] sm:max-w-none">
               {title || t("preview_modal.title")}
             </h2>
             <p className="text-xs text-[#37B7D5] font-bold mt-1">
@@ -139,7 +186,7 @@ export default function TimetablePreviewModal({
         </div>
 
         {/* Toolbar (Navigation & Actions) */}
-        <div className="flex items-center justify-between px-3 py-3 bg-gray-50 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-3 py-3 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -148,28 +195,28 @@ export default function TimetablePreviewModal({
             >
               {t("preview_modal.today")}
             </button>
-            <div className="flex items-center bg-white border border-gray-300 rounded-lg ml-2">
+            <div className="flex items-center bg-white border border-gray-300 rounded-lg sm:ml-2 flex-1 sm:flex-initial justify-between sm:justify-start">
               <button
                 type="button"
                 onClick={goToPreviousWeek}
-                className="p-2 hover:bg-gray-50 text-gray-600 border-r border-gray-300 rounded-l-[7px]"
+                className="p-2 hover:bg-gray-50 text-gray-600 border-r border-gray-300 rounded-l-[7px] flex-1 sm:flex-none flex justify-center"
               >
                 <ChevronLeft size={20} />
               </button>
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-none">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowDatePicker(!showDatePicker);
                   }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 flex items-center gap-2 hover:bg-gray-50 cursor-pointer transition-colors group"
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 cursor-pointer transition-colors group"
                 >
                   <CalendarIcon
                     size={16}
                     className="text-gray-400 group-hover:text-[#37B7D5] transition-colors"
                   />
-                  <span className="group-hover:text-[#37B7D5] transition-colors">
+                  <span className="group-hover:text-[#37B7D5] transition-colors whitespace-nowrap">
                     {t("preview_modal.week")}
                   </span>
                 </button>
@@ -187,7 +234,7 @@ export default function TimetablePreviewModal({
               <button
                 type="button"
                 onClick={goToNextWeek}
-                className="p-2 hover:bg-gray-50 text-gray-600 border-l border-gray-300 rounded-r-[7px]"
+                className="p-2 hover:bg-gray-50 text-gray-600 border-l border-gray-300 rounded-r-[7px] flex-1 sm:flex-none flex justify-center"
               >
                 <ChevronRight size={20} />
               </button>
@@ -286,12 +333,9 @@ export default function TimetablePreviewModal({
                         if (startHour > hours[hours.length - 1] + 1)
                           return null;
 
-                        const isHexColor = course.color?.startsWith("#");
-                        const hexColor = course.color as string;
-                        const colorClasses = isHexColor
-                          ? "text-gray-900 border-2"
-                          : course.color ||
-                            "bg-[#37B7D5]/20 border-[#37B7D5]/40 text-[#1A7A90]";
+                        const cardColor = getCourseColor(
+                          course.hash || course.subject || course.id
+                        );
 
                         return (
                           // biome-ignore lint/a11y/useSemanticElements: styling constraints
@@ -305,26 +349,28 @@ export default function TimetablePreviewModal({
                             }}
                             role="button"
                             tabIndex={0}
-                            className={`absolute left-0 right-0 p-2 text-sm overflow-hidden border transition-all z-10 hover:opacity-100 cursor-pointer ${colorClasses}`}
+                            className="absolute left-0.5 right-0.5 p-1 sm:p-2 text-[10px] sm:text-sm overflow-hidden border-l-4 rounded-md transition-all z-10 hover:brightness-95 cursor-pointer shadow-sm"
                             style={{
                               top: `${top}px`,
                               height: `${height}px`,
-                              ...(isHexColor
-                                ? {
-                                    backgroundColor: `${hexColor}08`,
-                                    borderColor: hexColor,
-                                  }
-                                : {}),
+                              backgroundColor: `${cardColor}70`, // ~44% opacity
+                              borderLeftColor: cardColor,
+                              borderColor: `${cardColor}C0`,
+                              color: "#111827", // Dark text
                             }}
                           >
                             <div
-                              className="font-semibold truncate"
+                              className="font-bold truncate text-[13px]"
+                              style={{ color: "#111827" }}
                               title={course.subject}
                             >
                               {course.subject}
                             </div>
-                            <div className="text-xs opacity-90 mt-1 flex items-center gap-1 truncate">
-                              <Clock size={12} className="shrink-0" />{" "}
+                            <div
+                              className="text-[10px] font-medium mt-1 flex items-center gap-1 truncate"
+                              style={{ color: "rgba(0, 0, 0, 0.7)" }}
+                            >
+                              <Clock size={11} className="shrink-0" />{" "}
                               {formatTime(startDate, locale)} -{" "}
                               {formatTime(endDate, locale)}
                             </div>
@@ -332,19 +378,21 @@ export default function TimetablePreviewModal({
                               <>
                                 {course.location && (
                                   <div
-                                    className="text-xs opacity-90 mt-1 flex items-center gap-1 truncate"
+                                    className="text-[10px] mt-1 flex items-center gap-1 truncate"
+                                    style={{ color: "rgba(0, 0, 0, 0.7)" }}
                                     title={course.location}
                                   >
-                                    <MapPin size={12} className="shrink-0" />{" "}
+                                    <MapPin size={10} className="shrink-0" />{" "}
                                     {course.location}
                                   </div>
                                 )}
                                 {course.teacher && (
                                   <div
-                                    className="text-xs opacity-90 mt-1 flex items-center gap-1 truncate"
+                                    className="text-[10px] mt-1 flex items-center gap-1 truncate"
+                                    style={{ color: "rgba(0, 0, 0, 0.7)" }}
                                     title={course.teacher}
                                   >
-                                    <User size={12} className="shrink-0" />{" "}
+                                    <User size={10} className="shrink-0" />{" "}
                                     {course.teacher}
                                   </div>
                                 )}
@@ -373,10 +421,10 @@ export default function TimetablePreviewModal({
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: prevent close on click inside */}
           {/* biome-ignore lint/a11y/noStaticElementInteractions: prevent close on click inside */}
           <div
-            className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
               <h3 className="text-lg font-semibold text-gray-900">
                 {t("course_details.title")}
               </h3>
@@ -388,12 +436,12 @@ export default function TimetablePreviewModal({
                 <X size={20} />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div>
                 <div className="text-sm font-medium text-gray-500 mb-1">
                   {t("course_details.subject")}
                 </div>
-                <div className="text-base font-semibold text-gray-900">
+                <div className="text-base font-bold text-gray-900">
                   {selectedCourse.subject}
                 </div>
               </div>
@@ -453,8 +501,24 @@ export default function TimetablePreviewModal({
                   </div>
                 </div>
               )}
+
+              {selectedCourse.description && (
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 text-gray-400">
+                    <FileText size={18} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-500 mb-1">
+                      {t("course_details.description")}
+                    </div>
+                    <div className="text-base text-gray-900 whitespace-pre-wrap">
+                      {renderTextWithLinks(selectedCourse.description.trim())}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end shrink-0">
               <button
                 type="button"
                 onClick={() => setSelectedCourse(null)}

@@ -58,7 +58,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.set("trust proxy", true);
 const port = process.env.PORT || 3000;
+const isDev = process.env.NODE_ENV === "development" || !process.env.NODE_ENV;
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL || "file:./database.db",
@@ -76,13 +79,47 @@ app.use((_req, _res, next) => {
   next();
 });
 
-// Mount Better Auth handler
-// Use a regex to match all paths starting with /api/auth
-// This preserves the prefix in req.url (unlike app.use with a string)
-// and is compatible with Express 5's stricter path parsing.
-app.all(/^\/api\/auth.*/, toNodeHandler(auth));
+// Better Auth handler MUST be before body-parsers (like express.json)
+// because it needs to read the raw request stream for POST requests.
+// NOTE: We use a global middleware and check originalUrl to avoid Express's
+// prefix-stripping behavior which breaks Better Auth's internal routing.
+app.use((req, _res, next) => {
+  if (isDev || process.env.DEBUG_AUTH === "true") {
+    if (req.originalUrl.startsWith("/api/auth") || req.originalUrl.startsWith("/.well-known")) {
+      console.log(`[AUTH] ${req.method} ${req.originalUrl}`);
+    }
+  }
+  next();
+});
+
+app.use((req, res, next) => {
+  if (
+    req.originalUrl.startsWith("/api/auth") ||
+    req.originalUrl.startsWith("/.well-known")
+  ) {
+    return toNodeHandler(auth)(req, res);
+  }
+  next();
+});
 
 app.use(express.json());
+
+// SPA Redirect for development
+if (isDev) {
+  app.use((req, _res, next) => {
+    // If it's an API, Auth, or static file request, let it fall through
+    if (
+      req.path.startsWith("/api") ||
+      req.path.startsWith("/.well-known") ||
+      req.path.includes(".") ||
+      req.path.startsWith("/@")
+    ) {
+      return next();
+    }
+    console.log(`[DEV] Redirecting ${req.path} to ${frontendUrl}`);
+    _res.redirect(`${frontendUrl}${req.originalUrl}`);
+  });
+}
 
 // --- Timetable API ---
 
@@ -550,7 +587,7 @@ app.post("/api/oauth/timetable-access", async (req: Request, res: Response) => {
  */
 app.get("/api/oauth/timetables", async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return res
       .status(401)
       .json({ error: "UNAUTHORIZED", message: "Missing or invalid token" });
@@ -564,7 +601,7 @@ app.get("/api/oauth/timetables", async (req: Request, res: Response) => {
       include: { user: true },
     });
 
-    if (!accessToken || !accessToken.userId || !accessToken.clientId) {
+    if (!accessToken?.userId || !accessToken.clientId) {
       return res
         .status(401)
         .json({ error: "UNAUTHORIZED", message: "Invalid token" });
@@ -1667,15 +1704,30 @@ app.get("/api/health", (_req, res) => {
   res.send({ status: "ok", service: "Open Timetable Scraper Hub" });
 });
 
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, "public")));
+// Handle SPA routing for production
+if (!isDev) {
+  const publicPath = path.join(__dirname, "public");
+  app.use(express.static(publicPath));
+  app.get(/.*/, (req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/.well-known")) {
+      return next();
+    }
+    const targetFile = path.join(publicPath, "index.html");
+    res.sendFile(targetFile, (err) => {
+      if (err) {
+        console.error(`[SPA Error] Could not send index.html: ${err.message}. Path looked at: ${targetFile}`);
+        next();
+      }
+    });
+  });
+}
 
-// Handle SPA routing - return index.html for all non-API routes
-app.get(/.*/, (req, res, next) => {
-  if (req.path.startsWith("/api")) {
-    return next();
-  }
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+// 404 Diagnostic Logger
+app.use((req, res) => {
+  console.log(`[404] NOT FOUND: ${req.method} ${req.originalUrl}`);
+  res.status(404).send(`404 Not Found: ${req.originalUrl}`);
 });
 
-app.listen(port, () => {});
+app.listen(port, () => {
+  console.log(`Server started on http://localhost:${port}`);
+});

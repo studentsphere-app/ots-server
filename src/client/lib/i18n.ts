@@ -13,7 +13,40 @@ const resources = {
         submit: "Se connecter",
         loading: "Chargement...",
         no_account: "Pas encore de compte ? S'inscrire",
+        already_have_account: "Déjà un compte ? Connectez-vous",
         error_invalid: "Email ou mot de passe incorrect.",
+        error_unexpected: "Une erreur inattendue est survenue.",
+      },
+      register: {
+        error_password_criteria: "Veuillez respecter tous les critères du mot de passe.",
+        error_generic: "Une erreur est survenue lors de l'inscription.",
+        error_unexpected: "Une erreur inattendue est survenue.",
+      },
+      forgot_password: {
+        title: "Mot de passe oublié ?",
+        description: "Entrez votre adresse email pour recevoir un lien de réinitialisation.",
+        success: "Un email de réinitialisation vous a été envoyé.",
+        email: "Adresse email",
+        sending: "Envoi en cours...",
+        submit: "Réinitialiser le mot de passe",
+        back_to_login: "Retour à la connexion",
+        error_sending_email: "Erreur lors de l'envoi de l'email.",
+      },
+      reset_password: {
+        title: "Réinitialisation du mot de passe",
+        description:
+          "Veuillez choisir un nouveau mot de passe pour votre compte.",
+        password: "Nouveau mot de passe",
+        confirm_password: "Confirmer le mot de passe",
+        submit: "Mettre à jour le mot de passe",
+        loading: "Mise à jour...",
+        back_to_login: "Retour à la connexion",
+        success_title: "Mot de passe mis à jour !",
+        success_redirect:
+          "Votre mot de passe a été réinitialisé avec succès. Vous allez être redirigé vers la page de connexion.",
+        error_invalid_password:
+          "Le mot de passe ne respecte pas les critères demandés.",
+        error_passwords_dont_match: "Les mots de passe ne correspondent pas.",
         error_unexpected: "Une erreur inattendue est survenue.",
       },
       home: {
@@ -165,6 +198,7 @@ const resources = {
         password_lowercase: "Une minuscule",
         password_number: "Un chiffre",
         password_special: "Un caractère spécial",
+        password_match: "Les mots de passe correspondent",
         cancel: "Annuler",
         delete: "Supprimer",
         revoke: "Révoquer",
@@ -359,6 +393,7 @@ const resources = {
         time: "Horaire",
         location: "Salle",
         teacher: "Professeur",
+        description: "Description",
         close: "Fermer",
       },
       landing: {
@@ -369,6 +404,9 @@ const resources = {
             "Un outil conçu pour <1>automatiser la récupération</1> de vos emplois du temps à la source. Centralisez vos cours via un collecteur performant et connectez votre planning à <3>n'importe quelle application</3> grâce à une API.",
           cta_start: "Commencer",
           cta_docs: "Documentation",
+        },
+        schools: {
+          title: "Plus de 25+ établissements supportés",
         },
         features: {
           title: "Conçu pour être utile.",
@@ -426,7 +464,39 @@ const resources = {
         submit: "Sign In",
         loading: "Loading...",
         no_account: "Don't have an account? Sign up",
+        already_have_account: "Already have an account? Sign in",
         error_invalid: "Invalid email or password.",
+        error_unexpected: "An unexpected error occurred.",
+      },
+      register: {
+        error_password_criteria: "Please meet all password criteria.",
+        error_generic: "An error occurred during registration.",
+        error_unexpected: "An unexpected error occurred.",
+      },
+      forgot_password: {
+        title: "Forgot Password?",
+        description: "Enter your email address to receive a reset link.",
+        success: "A reset email has been sent to you.",
+        email: "Email address",
+        sending: "Sending...",
+        submit: "Reset password",
+        back_to_login: "Back to login",
+        error_sending_email: "Error sending email.",
+      },
+      reset_password: {
+        title: "Reset Password",
+        description: "Please choose a new password for your account.",
+        password: "New Password",
+        confirm_password: "Confirm Password",
+        submit: "Update Password",
+        loading: "Updating...",
+        back_to_login: "Back to login",
+        success_title: "Password Updated!",
+        success_redirect:
+          "Your password has been successfully reset. You will be redirected to the login page.",
+        error_invalid_password:
+          "The password does not meet the specified criteria.",
+        error_passwords_dont_match: "Passwords do not match.",
         error_unexpected: "An unexpected error occurred.",
       },
       home: {
@@ -576,6 +646,7 @@ const resources = {
         password_lowercase: "One lowercase letter",
         password_number: "One number",
         password_special: "One special character",
+        password_match: "Passwords match",
         cancel: "Cancel",
         delete: "Delete",
         revoke: "Revoke",
@@ -766,6 +837,7 @@ const resources = {
         time: "Time",
         location: "Room",
         teacher: "Teacher",
+        description: "Description",
         close: "Close",
       },
       landing: {
@@ -776,6 +848,9 @@ const resources = {
             "A tool designed to <1>automate the retrieval</1> of your timetables at the source. Centralize your classes via a high-performance collector and connect your schedule to <3>any application</3> thanks to an API.",
           cta_start: "Get Started",
           cta_docs: "Documentation",
+        },
+        schools: {
+          title: "Over 25+ supported institutions",
         },
         features: {
           title: "Designed to be useful.",
