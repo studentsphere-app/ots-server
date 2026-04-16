@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { Navigate, useSearchParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import { authClient, useSession } from "../lib/auth-client";
-import NotFound from "./NotFound";
 
 interface AppInfo {
   name: string | null;
@@ -93,7 +92,6 @@ export default function Consent() {
     session?.user,
   ]);
   const [searchParams] = useSearchParams();
-  const consentCode = searchParams.get("consent_code");
   const clientId = searchParams.get("client_id");
   const scope = searchParams.get("scope");
   const hasTimetableScope = (scope || "")
@@ -102,8 +100,8 @@ export default function Consent() {
 
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
   const [appInfoLoading, setAppInfoLoading] = useState(true);
-  const [isValidatingCode, setIsValidatingCode] = useState(true);
-  const [isCodeValid, setIsCodeValid] = useState(false);
+  const [isValidatingCode, setIsValidatingCode] = useState(false);
+  const [isCodeValid, setIsCodeValid] = useState(true);
 
   const [timetables, setTimetables] = useState<Timetable[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -153,29 +151,12 @@ export default function Consent() {
       .finally(() => setAppInfoLoading(false));
   }, [clientId]);
 
-  // Validate consent code
+  // Consent signature validation is handled automatically by Better Auth
+  // when calling authClient.oauth2.consent() with the URL's sig and exp parameters.
   useEffect(() => {
-    if (!consentCode) {
-      setIsValidatingCode(false);
-      setIsCodeValid(false);
-      return;
-    }
-
-    fetch(`/api/oauth/validate-consent?consent_code=${consentCode}`)
-      .then((res) => {
-        if (res.ok) {
-          setIsCodeValid(true);
-        } else {
-          setIsCodeValid(false);
-        }
-      })
-      .catch(() => {
-        setIsCodeValid(false);
-      })
-      .finally(() => {
-        setIsValidatingCode(false);
-      });
-  }, [consentCode]);
+    setIsValidatingCode(false);
+    setIsCodeValid(true);
+  }, []);
 
   const fetchTimetables = useCallback(async () => {
     try {
@@ -349,9 +330,7 @@ export default function Consent() {
     (s) => !metadata?.requestedPermissions?.includes(s.id)
   );
 
-  if (!consentCode) {
-    return <NotFound />;
-  }
+
 
   if (isPending || appInfoLoading || isValidatingCode) {
     return (

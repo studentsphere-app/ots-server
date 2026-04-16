@@ -498,7 +498,7 @@ app.get(
   async (req: Request, res: Response) => {
     try {
       const clientId = req.params.clientId as string;
-      const application = await prisma.oauthApplication.findUnique({
+      const application = await prisma.oauthClient.findUnique({
         where: { clientId },
         select: { name: true, icon: true, metadata: true, userId: true },
       });
@@ -601,8 +601,9 @@ app.get("/api/oauth/timetables", async (req: Request, res: Response) => {
   const token = authHeader.split(" ")[1];
 
   try {
+    const hashedToken = crypto.createHash("sha256").update(token).digest("base64url");
     const accessToken = await prisma.oauthAccessToken.findUnique({
-      where: { accessToken: token },
+      where: { token: hashedToken },
       include: { user: true },
     });
 
@@ -613,8 +614,8 @@ app.get("/api/oauth/timetables", async (req: Request, res: Response) => {
     }
 
     if (
-      accessToken.accessTokenExpiresAt &&
-      accessToken.accessTokenExpiresAt < new Date()
+      accessToken.expiresAt &&
+      accessToken.expiresAt < new Date()
     ) {
       return res
         .status(401)
@@ -665,7 +666,7 @@ app.get("/api/oauth/authorized-apps", async (req: Request, res: Response) => {
     const accesses = await prisma.oauthClientTimetableAccess.findMany({
       where: { userId: session.user.id },
       include: {
-        oauthapplication: true,
+        oauthclient: true,
         timetable: {
           include: {
             courses: true,
@@ -688,7 +689,7 @@ app.get("/api/oauth/authorized-apps", async (req: Request, res: Response) => {
     for (const access of accesses) {
       if (!appsMap.has(access.clientId)) {
         appsMap.set(access.clientId, {
-          app: access.oauthapplication,
+          app: access.oauthclient,
           createdAt: access.createdAt,
           timetables: [],
         });
@@ -790,7 +791,7 @@ app.get(
     }
 
     try {
-      const applications = await prisma.oauthApplication.findMany({
+      const applications = await prisma.oauthClient.findMany({
         where: { userId: session.user.id },
         select: {
           id: true,
@@ -798,7 +799,7 @@ app.get(
           icon: true,
           metadata: true,
           clientId: true,
-          redirectUrls: true,
+          redirectUris: true,
           type: true,
           disabled: true,
           createdAt: true,
@@ -854,7 +855,7 @@ app.post(
     const {
       name,
       icon,
-      redirectUrls, // array of strings or comma-separated string
+      redirectUris, // array of strings or comma-separated string
       website,
       requestedPermissions,
       developerContact,
@@ -889,18 +890,18 @@ app.post(
         privacyPolicyLink: privacyPolicyLink || "",
       };
 
-      const parsedRedirects = Array.isArray(redirectUrls)
-        ? redirectUrls.join(",")
-        : redirectUrls;
+      const parsedRedirects = Array.isArray(redirectUris)
+        ? JSON.stringify(redirectUris)
+        : redirectUris;
 
-      const newApp = await prisma.oauthApplication.create({
+      const newApp = await prisma.oauthClient.create({
         data: {
           id,
           name,
           icon,
           clientId,
-          clientSecret,
-          redirectUrls: parsedRedirects,
+          clientSecret: crypto.createHash("sha256").update(clientSecret).digest("base64url"),
+          redirectUris: parsedRedirects,
           metadata: JSON.stringify(metadataObj), // store standard OpenID provider stuff
           userId: session.user.id,
           createdAt: new Date(),
@@ -914,9 +915,9 @@ app.post(
           id: newApp.id,
           name: newApp.name,
           clientId: newApp.clientId,
-          clientSecret: newApp.clientSecret, // Returned ONLY ONCE
+          clientSecret: clientSecret, // Returned ONLY ONCE in plaintext
           icon: newApp.icon,
-          redirectUrls: newApp.redirectUrls,
+          redirectUris: newApp.redirectUris,
           metadataParsed: metadataObj,
         },
       });
@@ -950,7 +951,7 @@ app.put(
     const {
       name,
       icon,
-      redirectUrls,
+      redirectUris,
       website,
       requestedPermissions,
       developerContact,
@@ -959,7 +960,7 @@ app.put(
     } = req.body;
 
     try {
-      const existing = await prisma.oauthApplication.findFirst({
+      const existing = await prisma.oauthClient.findFirst({
         where: { clientId: String(clientId), userId: String(session.user.id) },
       });
 
@@ -999,18 +1000,18 @@ app.put(
             : parsedMetadata.privacyPolicyLink,
       };
 
-      const parsedRedirects = Array.isArray(redirectUrls)
-        ? redirectUrls.join(",")
-        : redirectUrls !== undefined
-          ? String(redirectUrls)
-          : existing.redirectUrls;
+      const parsedRedirects = Array.isArray(redirectUris)
+        ? JSON.stringify(redirectUris)
+        : redirectUris !== undefined
+          ? String(redirectUris)
+          : existing.redirectUris;
 
-      const updated = await prisma.oauthApplication.update({
+      const updated = await prisma.oauthClient.update({
         where: { clientId: String(clientId) },
         data: {
           name: name !== undefined ? String(name) : existing.name,
           icon: icon !== undefined ? String(icon) : existing.icon,
-          redirectUrls: parsedRedirects as string,
+          redirectUris: parsedRedirects as string,
           metadata: JSON.stringify(newMetadata),
           updatedAt: new Date(),
         },
@@ -1053,7 +1054,7 @@ app.post(
     const { clientId } = req.params;
 
     try {
-      const existing = await prisma.oauthApplication.findFirst({
+      const existing = await prisma.oauthClient.findFirst({
         where: { clientId: String(clientId), userId: String(session.user.id) },
       });
 
@@ -1064,11 +1065,12 @@ app.post(
       }
 
       const newSecret = crypto.randomBytes(32).toString("base64url");
+      const hashedSecret = crypto.createHash("sha256").update(newSecret).digest("base64url");
 
-      await prisma.oauthApplication.update({
+      await prisma.oauthClient.update({
         where: { clientId: String(clientId) },
         data: {
-          clientSecret: newSecret,
+          clientSecret: hashedSecret,
           updatedAt: new Date(),
         },
       });
@@ -1103,7 +1105,7 @@ app.post(
     const { clientId } = req.params;
 
     try {
-      const existing = await prisma.oauthApplication.findFirst({
+      const existing = await prisma.oauthClient.findFirst({
         where: { clientId: String(clientId), userId: String(session.user.id) },
       });
 
@@ -1155,7 +1157,7 @@ app.delete(
     const clientId = req.params.clientId as string;
 
     try {
-      const existing = await prisma.oauthApplication.findFirst({
+      const existing = await prisma.oauthClient.findFirst({
         where: { clientId: String(clientId), userId: String(session.user.id) },
       });
 
@@ -1166,7 +1168,7 @@ app.delete(
       }
 
       // Delete application
-      await prisma.oauthApplication.delete({
+      await prisma.oauthClient.delete({
         where: { clientId: String(clientId) },
       });
 

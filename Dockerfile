@@ -56,4 +56,4 @@ RUN pnpm install --prod --frozen-lockfile
 EXPOSE 3000
 
 # Start the server
-CMD ["/bin/sh", "-c", "npx prisma db push && node dist/index.js"]
+CMD ["/bin/sh", "-c", "echo '==> Pushing DB to: '\"$DATABASE_URL\" && DATABASE_URL=\"$DATABASE_URL\" pnpm exec prisma db push --accept-data-loss && echo '==> DB push done, starting server...' && node dist/index.js"]

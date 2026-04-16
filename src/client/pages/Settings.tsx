@@ -56,7 +56,7 @@ const devAppSchema = z.object({
       z.undefined(),
     ])
     .optional(),
-  redirectUrls: z
+  redirectUris: z
     .array(appUrlSchema)
     .min(1, "Au moins une URI de redirection est requise")
     .refine((urls) => new Set(urls).size === urls.length, {
@@ -81,7 +81,7 @@ interface DevApp {
   name: string;
   icon?: string;
   createdAt: string | number | Date;
-  redirectUrls?: string;
+  redirectUris?: string;
   metadataParsed?: {
     website?: string;
     requestedPermissions?: string[];
@@ -331,7 +331,7 @@ export default function Settings() {
       name: devAppName,
       website: devAppWebsite,
       icon: devAppIcon,
-      redirectUrls: devAppRedirects,
+      redirectUris: devAppRedirects,
       developerContact: devAppDeveloperContact,
       tosLink: devAppTosLink,
       privacyPolicyLink: devAppPrivacyPolicyLink,
@@ -356,7 +356,7 @@ export default function Settings() {
           name: devAppName,
           website: devAppWebsite,
           icon: devAppIcon,
-          redirectUrls: devAppRedirects,
+          redirectUris: devAppRedirects,
           requestedPermissions: devAppPermissions,
           developerContact: devAppDeveloperContact,
           tosLink: devAppTosLink,
@@ -392,7 +392,7 @@ export default function Settings() {
       name: devAppName,
       website: devAppWebsite,
       icon: devAppIcon,
-      redirectUrls: devAppRedirects,
+      redirectUris: devAppRedirects,
       developerContact: devAppDeveloperContact,
       tosLink: devAppTosLink,
       privacyPolicyLink: devAppPrivacyPolicyLink,
@@ -419,7 +419,7 @@ export default function Settings() {
             name: devAppName,
             website: devAppWebsite,
             icon: devAppIcon,
-            redirectUrls: devAppRedirects,
+            redirectUris: devAppRedirects,
             requestedPermissions: devAppPermissions,
             developerContact: devAppDeveloperContact,
             tosLink: devAppTosLink,
@@ -1396,8 +1396,8 @@ export default function Settings() {
                                 app.metadataParsed?.website || ""
                               );
                               setDevAppRedirects(
-                                app.redirectUrls
-                                  ? app.redirectUrls
+                                app.redirectUris
+                                  ? app.redirectUris
                                       .split(",")
                                       .map((r: string) => r.trim())
                                       .filter(Boolean)
@@ -2406,13 +2406,13 @@ export default function Settings() {
                                   if (!parseResult.success) {
                                     setDevAppFormErrors({
                                       ...devAppFormErrors,
-                                      redirectUrls:
+                                      redirectUris:
                                         parseResult.error.issues[0].message,
                                     });
                                   } else if (devAppRedirects.includes(val)) {
                                     setDevAppFormErrors({
                                       ...devAppFormErrors,
-                                      redirectUrls: t(
+                                      redirectUris: t(
                                         "dev_apps.modal.redirects_error_invalid"
                                       ),
                                     });
@@ -2423,13 +2423,13 @@ export default function Settings() {
                                     ]);
                                     setDevAppRedirectInput("");
                                     const nextErrors = { ...devAppFormErrors };
-                                    delete nextErrors.redirectUrls;
+                                    delete nextErrors.redirectUris;
                                     setDevAppFormErrors(nextErrors);
                                   }
                                 }
                               }
                             }}
-                            className={`flex-1 px-4 py-3 bg-gray-50 border ${devAppFormErrors.redirectUrls ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:ring-[#37B7D5]"} rounded-xl focus:ring-2 focus:border-transparent sm:text-sm outline-none transition-all`}
+                            className={`flex-1 px-4 py-3 bg-gray-50 border ${devAppFormErrors.redirectUris ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:ring-[#37B7D5]"} rounded-xl focus:ring-2 focus:border-transparent sm:text-sm outline-none transition-all`}
                             placeholder={t(
                               "dev_apps.modal.redirects_placeholder"
                             )}
@@ -2443,13 +2443,13 @@ export default function Settings() {
                                 if (!parseResult.success) {
                                   setDevAppFormErrors({
                                     ...devAppFormErrors,
-                                    redirectUrls:
+                                    redirectUris:
                                       parseResult.error.issues[0].message,
                                   });
                                 } else if (devAppRedirects.includes(val)) {
                                   setDevAppFormErrors({
                                     ...devAppFormErrors,
-                                    redirectUrls: t(
+                                    redirectUris: t(
                                       "dev_apps.modal.redirects_error_invalid"
                                     ),
                                   });
@@ -2457,7 +2457,7 @@ export default function Settings() {
                                   setDevAppRedirects([...devAppRedirects, val]);
                                   setDevAppRedirectInput("");
                                   const nextErrors = { ...devAppFormErrors };
-                                  delete nextErrors.redirectUrls;
+                                  delete nextErrors.redirectUris;
                                   setDevAppFormErrors(nextErrors);
                                 }
                               }
@@ -2468,9 +2468,9 @@ export default function Settings() {
                             {t("dev_apps.modal.redirects_add")}
                           </button>
                         </div>
-                        {devAppFormErrors.redirectUrls && (
+                        {devAppFormErrors.redirectUris && (
                           <p className="mb-2 text-xs text-red-500 font-bold">
-                            {devAppFormErrors.redirectUrls}
+                            {devAppFormErrors.redirectUris}
                           </p>
                         )}
                         <div className="space-y-2 mb-1.5 max-h-40 overflow-y-auto pr-1">
