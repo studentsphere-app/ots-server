@@ -11,7 +11,7 @@ This application serves as both the backend API and the frontend dashboard. It m
 > ## ⚖️ LEGAL DISCLAIMER & LIMITATION OF LIABILITY
 >
 > **This project is an independent open-source tool. It is NOT affiliated with, authorized, maintained, sponsored, or endorsed by:**
-> **The IGENTIA Education Group / Compétences & Développement (C&D) and all its member schools** (including but not limited to: **EPSI, WIS, IFAG, IHEDREA, IDRAC, IET, SUP'DE COM, 3A, ESAIL, VIVA MUNDI**, etc.). **The developers and operators of the WigorServices platform** or any other direct school portals/SaaS providers integrated into this tool.
+> **The IGENSIA Education Group / Compétences & Développement (C&D) and all its member schools** (including but not limited to: **EPSI, WIS, IFAG, IHEDREA, IDRAC, IET, SUP'DE COM, 3A, ESAIL, VIVA MUNDI**, etc.). **The developers and operators of the WigorServices platform** or any other direct school portals/SaaS providers integrated into this tool.
 >
 > ### Scope of Non-Affiliation
 > This disclaimer applies to **all current and future providers** included in this package. Any mention of a specific institution, school name, or portal is done strictly for **identification and technical compatibility purposes**.
