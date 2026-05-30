@@ -11,18 +11,19 @@ This application serves as both the backend API and the frontend dashboard. It m
 > ## ⚖️ LEGAL DISCLAIMER & LIMITATION OF LIABILITY
 >
 > **This project is an independent open-source tool. It is NOT affiliated with, authorized, maintained, sponsored, or endorsed by:**
-> **The IGENSIA Education Group / Compétences & Développement (C&D) and all its member schools** (including but not limited to: **EPSI, WIS, IFAG, IHEDREA, IDRAC, IET, SUP'DE COM, 3A, ESAIL, VIVA MUNDI**, etc.). **The developers and operators of the WigorServices platform** or any other direct school portals/SaaS providers integrated into this tool.
+> * **The IGENSIA Education Group / Compétences & Développement (C&D) and all its member schools** (including but not limited to: **EPSI, WIS, IFAG, IHEDREA, IDRAC, IET, SUP'DE COM, 3A, ESAIL, VIVA MUNDI**, etc.), or the developers/operators of the **WigorServices** platform.
+> * **YMAG (Groupe SEPTEO)** (developers of **NetYpareo**), **Simplon.co**, or any other educational institutions using these platforms.
 >
-> ### Scope of Non-Affiliation
-> This disclaimer applies to **all current and future providers** included in this package. Any mention of a specific institution, school name, or portal is done strictly for **identification and technical compatibility purposes**.
+> ### Scope of Non-Affiliation & Intellectual Property
+> This disclaimer applies to **all current and future providers** included in this package (including but not limited to `@studentsphere/ots-provider-wigor` and `@studentsphere/ots-provider-netypareo`). All trademarks, logos, and brand names are the property of their respective owners. Their mention here is strictly for **identification and technical compatibility purposes** and does not imply any association or endorsement.
 >
 > ### Responsible Use & Compliance
-> **Educational Purpose**: This tool is provided for **educational purposes** and to facilitate interoperability. 
-> * **User Responsibility**: It is the end-user's **sole responsibility** to ensure that using this scraper/provider complies with their specific institution's **Terms of Service (ToS)**, internal regulations, and local laws (e.g., GDPR, automated data access).
-> * **Account Risk**: The developer assumes **no liability** for any consequences resulting from the use of this tool, including but not limited to: account suspensions, IP bans, access blocks, or disciplinary actions by the schools or groups mentioned above.
+> * **Educational Purpose**: This tool is provided for **educational purposes** and to facilitate interoperability.
+> * **User Responsibility**: It is the end-user's **sole responsibility** to ensure that using these scrapers/providers complies with their specific institution's **Terms of Service (ToS)**, internal regulations, and local laws regarding automated data access.
+> * **Account Risk**: The developer assumes **no liability** for any consequences resulting from the use of this tool, including but not limited to: account suspensions, IP bans, access blocks, or any disciplinary/legal actions taken by the aforementioned groups or institutions.
 >
-> ### "As Is" Warranty
-> The software is provided **"as is"**, without warranty of any kind. As this tool relies on parsing third-party web structures, functionality may break at any time due to updates on the official portals.
+> ### "As Is" Warranty & Service Changes
+> The software is provided **"as is"**, without warranty of any kind. Since this tool relies on parsing third-party web structures and pages, functionality may break at any time due to updates on the official portals (including WigorServices and NetYpareo portals).
 >
 > **By using this package or its providers, you acknowledge and agree to these terms in full.**
 
